@@ -1,0 +1,4 @@
+product_name,category,price,inventory_status,eggless
+Signature Choco Chip Cookies,Cookies,200,In Stock,true
+Double Dark Sea Salt Cookies,Cookies,220,Low Stock,true
+Classic Butter Cookies,Cookies,180,Out of Stock,false
