@@ -9,7 +9,8 @@
     "lint": "eslint",
     "push": "git add . && git commit -m \"update: milestone sync\" && git push",
     "postinstall": "prisma skills sync || exit 0",
-    "test:ingest": "ts-node scripts/test-ingest.ts"
+    "test:ingest": "ts-node scripts/test-ingest.ts",
+    "test:readiness": "ts-node scripts/test-readiness.ts"
   },
   "dependencies": {
     "@google/genai": "^2.21.0",
