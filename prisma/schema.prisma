@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Merchant {
+  id                String                 @id @default(cuid())
+  name              String
+  slug              String                 @unique
+  contactPhone      String?
+  location          String?
+  readinessScore    Int                    @default(0)
+  transactionStatus String                 @default("NOT_READY") // NOT_READY, CONDITIONALLY_READY, READY
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  products          Product[]
+  policies          Policy[]
+  issues            ReadinessIssue[]
+  proposals         TransactionProposal[]
+  auditLogs         AuditLog[]
+}
+
+model Product {
+  id                String                @id @default(cuid())
+  merchantId        String
+  name              String
+  description       String?
+  price             Float?
+  currency          String                @default("INR")
+  priceVerified     Boolean               @default(false)
+  inventory         Int?
+  inventoryVerified Boolean               @default(false)
+  isEggless         Boolean?
+  sourceEvidence    String?
+  status            String                @default("DRAFT") // DRAFT, VERIFIED, REJECTED
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  merchant          Merchant              @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  proposals         TransactionProposal[]
+}
+
+model Policy {
+  id             String   @id @default(cuid())
+  merchantId     String
+  type           String   // REFUND, CANCELLATION, DELIVERY
+  content        String?
+  isVerified     Boolean  @default(false)
+  sourceEvidence String?
+  createdAt      DateTime @default(now())
+  merchant       Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+}
+
+model ReadinessIssue {
+  id                    String   @id @default(cuid())
+  merchantId            String
+  severity              String   // CRITICAL, HIGH, MEDIUM, LOW
+  category              String   // PRICE, INVENTORY, POLICY, CONSISTENCY
+  title                 String
+  description           String
+  remediationSuggestion String?
+  resolved              Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  merchant              Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+}
+
+model TransactionProposal {
+  id                String    @id @default(cuid())
+  merchantId        String
+  productId         String
+  requestedQuantity Int
+  offeredPrice      Float
+  calculatedTotal   Float
+  status            String    @default("PROPOSED") // PROPOSED, RESERVED, BLOCKED, EXPIRED, COMPLETED
+  blockReason       String?
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
+  merchant          Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  product           Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orders            Order[]
+}
+
+model Order {
+  id                    String              @id @default(cuid())
+  transactionProposalId String
+  razorpayOrderId       String              @unique
+  razorpayPaymentId     String?
+  amount                Int                 // In paise (e.g. 25000 = ₹250)
+  currency              String              @default("INR")
+  status                String              @default("CREATED") // CREATED, PAID, FAILED
+  signature             String?
+  createdAt             DateTime            @default(now())
+  proposal              TransactionProposal @relation(fields: [transactionProposalId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  merchantId String
+  eventType  String
+  details    String
+  createdAt  DateTime @default(now())
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+}
