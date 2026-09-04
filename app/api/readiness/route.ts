@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { evaluateMerchantReadiness } from '../../../lib/engine/evaluator';
+import { checkTransactionInvariants } from '../../../lib/engine/invariants';
+import { calculateQualityScore } from '../../../lib/engine/scoring';
+import { generateDeterministicAdvice } from '../../../lib/ai/remediator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,34 +65,10 @@ export async function GET(request: NextRequest) {
     const merchant = await prisma.merchant.findUnique({
       where: { slug },
       include: {
-        products: {
-          select: {
-            id: true,
-            name: true,
-            price: true,
-            priceVerified: true,
-            inventory: true,
-            inventoryVerified: true,
-            status: true,
-          },
-        },
-        policies: {
-          select: {
-            id: true,
-            type: true,
-            content: true,
-            isVerified: true,
-          },
-        },
+        products: true,
+        policies: true,
         issues: {
-          select: {
-            id: true,
-            severity: true,
-            category: true,
-            title: true,
-            description: true,
-            resolved: true,
-          },
+          orderBy: { createdAt: 'desc' },
         },
       },
     });
@@ -101,12 +80,46 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Compute live invariants and score breakdown
+    const invariants = await checkTransactionInvariants(merchant.id, {
+      products: merchant.products,
+      policies: merchant.policies,
+      issues: merchant.issues,
+    });
+
+    const score = await calculateQualityScore(merchant.id, {
+      products: merchant.products,
+      policies: merchant.policies,
+      issues: merchant.issues,
+    });
+
+    // Enrich issues with AI remediation advice
+    const enrichedIssues = merchant.issues.map((issue) => ({
+      ...issue,
+      advice: generateDeterministicAdvice(issue),
+    }));
+
     return NextResponse.json({
       success: true,
+      merchant: {
+        id: merchant.id,
+        name: merchant.name,
+        slug: merchant.slug,
+        location: merchant.location,
+        contactPhone: merchant.contactPhone,
+        readinessScore: merchant.readinessScore,
+        transactionStatus: merchant.transactionStatus,
+        updatedAt: merchant.updatedAt,
+      },
       merchantSlug: merchant.slug,
       merchantName: merchant.name,
       readinessScore: merchant.readinessScore,
       transactionStatus: merchant.transactionStatus,
+      scoreBreakdown: score.breakdown,
+      invariants,
+      products: merchant.products,
+      policies: merchant.policies,
+      issues: enrichedIssues,
       productsCount: merchant.products.length,
       policiesCount: merchant.policies.length,
       issuesCount: merchant.issues.length,
