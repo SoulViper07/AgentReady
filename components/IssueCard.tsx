@@ -11,8 +11,14 @@ import {
   Terminal,
   ShieldCheck,
   Check,
+  ChevronDown,
+  ChevronUp,
+  Tag,
+  Package,
+  FileText,
 } from 'lucide-react';
 import { AuthorityTag } from './AuthorityTag';
+import { TiltCard } from './ui/TiltCard';
 
 export interface IssueCardProps {
   issue: {
@@ -49,6 +55,7 @@ export interface IssueCardProps {
     content?: string;
   }) => Promise<void>;
   isResolving?: boolean;
+  mode?: 'merchant' | 'inspector';
 }
 
 export const IssueCard: React.FC<IssueCardProps> = ({
@@ -56,6 +63,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   products,
   onResolve,
   isResolving = false,
+  mode = 'merchant',
 }) => {
   // Match target product from description or products list
   const matchedProduct = products.find((p) =>
@@ -88,6 +96,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
 
   const [loadingThis, setLoadingThis] = useState(false);
   const [justResolved, setJustResolved] = useState(false);
+  const [showPolicyPreview, setShowPolicyPreview] = useState(false);
 
   const handleAction = async (payload: Parameters<typeof onResolve>[0]) => {
     try {
@@ -193,40 +202,296 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   // Completed / Resolved State Card
   if (issue.resolved || justResolved) {
     return (
-      <div className="rounded-2xl bg-zinc-950/70 border border-emerald-500/30 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-emerald-950/20 transition-all animate-in fade-in duration-500">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] uppercase font-mono font-bold text-emerald-400">
-                Ground Truth Established
-              </span>
-              <AuthorityTag
-                type="HUMAN_VERIFIED"
-                compact
-                customLabel="Signed Off by Merchant"
-              />
+      <TiltCard className="rounded-2xl">
+        <div className="rounded-2xl bg-slate-900/80 border border-emerald-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-emerald-950/20 transition-all animate-in fade-in duration-500">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
             </div>
-            <h4 className="text-sm font-semibold text-zinc-200 mt-0.5">
-              {issue.title}
-            </h4>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] uppercase font-mono font-bold text-emerald-400">
+                  Ground Truth Established
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-medium">
+                  Verified
+                </span>
+              </div>
+              <h4 className="text-sm font-semibold text-white mt-0.5">
+                {issue.title}
+              </h4>
+            </div>
           </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-mono text-emerald-400 bg-emerald-950/40 px-3 py-1.5 rounded-lg border border-emerald-500/20">
+            <Check className="w-3.5 h-3.5" />
+            <span>Deterministically Recalculated</span>
+          </div>
+        </div>
+      </TiltCard>
+    );
+  }
+
+  // Merchant Mode (Clean, Human-centric, Touch-Friendly, No Raw Code)
+  if (mode === 'merchant') {
+    return (
+      <TiltCard className="rounded-2xl">
+        <div className="rounded-2xl bg-[#111827] border border-slate-800/90 hover:border-slate-700 p-5 sm:p-6 shadow-xl flex flex-col gap-4 transition-all">
+        {/* Top Header */}
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="flex items-start gap-3">
+            <div
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                isConflict
+                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  : issue.category === 'PRICE'
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : issue.category === 'INVENTORY'
+                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                  : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+              }`}
+            >
+              {isConflict ? (
+                <AlertTriangle className="w-4 h-4" />
+              ) : issue.category === 'PRICE' ? (
+                <Tag className="w-4 h-4" />
+              ) : issue.category === 'INVENTORY' ? (
+                <Package className="w-4 h-4" />
+              ) : (
+                <FileText className="w-4 h-4" />
+              )}
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white tracking-tight">
+                {isConflict
+                  ? `Confirm Price: ${matchedProduct?.name || 'Signature Choco Chip Cookies'}`
+                  : issue.category === 'PRICE'
+                  ? `Set Price: ${matchedProduct?.name || 'Oats & Cranberry Breakfast Cookies'}`
+                  : issue.category === 'INVENTORY'
+                  ? `Confirm Stock: ${matchedProduct?.name || 'Double Dark Sea Salt Cookies'}`
+                  : 'Perishable Goods Refund Disclaimer'}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
+                {isConflict
+                  ? `WhatsApp mentions ₹${detectedVal1}, but legacy records list ₹${detectedVal2}. Select the authoritative price for autonomous buyers:`
+                  : issue.category === 'PRICE'
+                  ? 'AI buyers need a fixed unit price to propose orders without guessing.'
+                  : issue.category === 'INVENTORY'
+                  ? 'Specify live batch inventory available for instant checkout.'
+                  : 'Artisan baked goods require clear refund terms to protect against payment chargebacks.'}
+              </p>
+            </div>
+          </div>
+          <span
+            className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${
+              issue.severity === 'CRITICAL'
+                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+            }`}
+          >
+            {issue.severity === 'CRITICAL' ? 'Action Required' : 'Recommended'}
+          </span>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-mono text-emerald-400/90 bg-emerald-950/40 px-3 py-1.5 rounded-lg border border-emerald-500/20">
-          <Check className="w-3.5 h-3.5" />
-          <span>Deterministically Recalculated</span>
+        {/* Action Controls Body */}
+        <div className="pt-3 border-t border-slate-800/80">
+          {/* Case 1: Conflict */}
+          {isConflict && (
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="grid grid-cols-2 gap-2 flex-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPrice(detectedVal1)}
+                  className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-between border transition-all cursor-pointer ${
+                    selectedPrice === detectedVal1
+                      ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300 shadow-sm'
+                      : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-600'
+                  }`}
+                >
+                  <span>₹{detectedVal1} (Recent)</span>
+                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+                    WhatsApp
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPrice(detectedVal2)}
+                  className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-between border transition-all cursor-pointer ${
+                    selectedPrice === detectedVal2
+                      ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300 shadow-sm'
+                      : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-600'
+                  }`}
+                >
+                  <span>₹{detectedVal2} (Legacy)</span>
+                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                    CSV
+                  </span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleAction({
+                    action: 'RESOLVE_CONFLICT',
+                    issueId: issue.id,
+                    productId: matchedProduct?.id,
+                    authoritativePrice: parseFloat(selectedPrice),
+                  })
+                }
+                disabled={loadingThis || isResolving}
+                className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/40 cursor-pointer shrink-0"
+              >
+                {loadingThis ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
+                Confirm Price (₹{selectedPrice})
+              </button>
+            </div>
+          )}
+
+          {/* Case 2: Missing Price */}
+          {!isConflict && issue.category === 'PRICE' && (
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1 flex items-center">
+                <span className="absolute left-3.5 text-slate-400 font-semibold text-sm pointer-events-none">
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  value={inputPrice}
+                  onChange={(e) => setInputPrice(e.target.value)}
+                  placeholder="220"
+                  className="w-full min-h-[44px] pl-8 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm font-semibold focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleAction({
+                    action: 'VERIFY_PRODUCT',
+                    productId: matchedProduct?.id,
+                    price: parseFloat(inputPrice),
+                  })
+                }
+                disabled={loadingThis || isResolving || !matchedProduct}
+                className="min-h-[44px] px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/40 cursor-pointer shrink-0"
+              >
+                {loadingThis ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="w-4 h-4" />
+                )}
+                Authorise Price
+              </button>
+            </div>
+          )}
+
+          {/* Case 3: Missing Inventory */}
+          {!isConflict && issue.category === 'INVENTORY' && (
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1 flex items-center">
+                <input
+                  type="number"
+                  value={inputInventory}
+                  onChange={(e) => setInputInventory(e.target.value)}
+                  placeholder="15"
+                  className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm font-semibold focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+                <span className="absolute right-3.5 text-slate-400 text-xs font-mono pointer-events-none">
+                  boxes in stock
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleAction({
+                    action: 'VERIFY_PRODUCT',
+                    productId: matchedProduct?.id,
+                    inventory: parseInt(inputInventory, 10),
+                  })
+                }
+                disabled={loadingThis || isResolving || !matchedProduct}
+                className="min-h-[44px] px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/40 cursor-pointer shrink-0"
+              >
+                {loadingThis ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="w-4 h-4" />
+                )}
+                Lock Verified Stock
+              </button>
+            </div>
+          )}
+
+          {/* Case 4: Missing Policy */}
+          {issue.category === 'POLICY' && (
+            <div className="flex flex-col gap-3">
+              <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 leading-relaxed italic">
+                &ldquo;{policyText}&rdquo;
+              </div>
+
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setShowPolicyPreview(!showPolicyPreview)}
+                  className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  {showPolicyPreview ? (
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  )}
+                  {showPolicyPreview ? 'Hide Policy Editor' : 'Edit Policy Text'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleAction({
+                      action: 'APPROVE_POLICY',
+                      merchantId: issue.merchantId,
+                      type: 'REFUND',
+                      content: policyText,
+                    })
+                  }
+                  disabled={loadingThis || isResolving}
+                  className="min-h-[44px] px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/40 cursor-pointer ml-auto"
+                >
+                  {loadingThis ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                  Accept &amp; Publish Policy
+                </button>
+              </div>
+
+              {showPolicyPreview && (
+                <textarea
+                  rows={3}
+                  value={policyText}
+                  onChange={(e) => setPolicyText(e.target.value)}
+                  className="w-full mt-1 p-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
+      </TiltCard>
     );
   }
 
   const rawLines = getRawEvidenceLines();
 
   return (
-    <div className="rounded-2xl bg-zinc-900/90 border border-zinc-800/90 hover:border-zinc-700/80 transition-all p-5 shadow-xl flex flex-col gap-4">
+    <TiltCard className="rounded-2xl">
+      <div className="rounded-2xl bg-zinc-900/90 border border-zinc-800/90 hover:border-zinc-700/80 transition-all p-5 shadow-xl flex flex-col gap-4">
       {/* Top Meta Bar */}
       <div className="flex items-center justify-between gap-3 flex-wrap border-b border-zinc-800/80 pb-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -528,5 +793,6 @@ export const IssueCard: React.FC<IssueCardProps> = ({
         </div>
       </div>
     </div>
+    </TiltCard>
   );
 };
