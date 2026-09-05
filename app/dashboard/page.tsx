@@ -19,8 +19,11 @@ import {
   Lock,
   Bot,
   ExternalLink,
+  History,
+  Code,
 } from 'lucide-react';
 import { IssueCard } from '../../components/IssueCard';
+import { AuditFeed } from '../../components/AuditFeed';
 
 interface MerchantData {
   id: string;
@@ -308,9 +311,17 @@ export default function DashboardPage() {
               target="_blank"
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-1.5"
             >
+              <Code className="w-3.5 h-3.5 text-zinc-400" />
               Catalog API
               <ExternalLink className="w-3 h-3 text-zinc-400" />
             </Link>
+            <a
+              href="#audit-ledger"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-2"
+            >
+              <History className="w-3.5 h-3.5 text-zinc-400" />
+              Audit Ledger
+            </a>
           </nav>
         </div>
 
@@ -891,6 +902,11 @@ export default function DashboardPage() {
               </tbody>
             </table>
           </div>
+        </section>
+
+        {/* Immutable System Audit Ledger */}
+        <section id="audit-ledger" className="w-full">
+          <AuditFeed merchantSlug={merchant?.slug || 'sweet-crumbs'} />
         </section>
       </main>
     </div>

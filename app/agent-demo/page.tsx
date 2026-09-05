@@ -6,7 +6,6 @@ import {
   Terminal,
   Bot,
   ShoppingCart,
-  ArrowRight,
   Clock,
   AlertTriangle,
   Sparkles,
@@ -16,12 +15,25 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
-  ShieldCheck,
   Store,
   ExternalLink,
   Loader2,
   Code,
+  CreditCard,
+  CheckCircle2,
+  AlertOctagon,
+  Lock,
+  History,
 } from 'lucide-react';
+
+interface GateBlockedInfo {
+  reason: string;
+  violatedInvariant: string;
+  requestedQuantity: number;
+  availableInventory: number;
+  auditLogId?: string;
+  timestamp?: string;
+}
 
 interface ToolCallTrace {
   toolName: string;
@@ -76,6 +88,34 @@ interface BuyerApiResponse {
   explanation: string;
 }
 
+interface RazorpayPaymentResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayInstance {
+  open: () => void;
+  on: (
+    event: string,
+    callback: (resp: { error?: { description?: string } }) => void
+  ) => void;
+}
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if ((window as unknown as { Razorpay?: unknown }).Razorpay)
+      return resolve(true);
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 export default function AgentDemoPage() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -84,6 +124,8 @@ export default function AgentDemoPage() {
   const [activeResponse, setActiveResponse] = useState<BuyerApiResponse | null>(
     null
   );
+  // Explicit proposal state (stores id, requestedQuantity, offeredPrice, calculatedTotal, status)
+  const [proposal, setProposal] = useState<ProposalRecord | null>(null);
   const [recentProposals, setRecentProposals] = useState<ProposalRecord[]>([]);
   const [copiedId, setCopiedId] = useState(false);
   const [showJson, setShowJson] = useState(false);
@@ -93,6 +135,29 @@ export default function AgentDemoPage() {
   });
   const [quickVerifying, setQuickVerifying] = useState(false);
   const [countdown, setCountdown] = useState<string>('10:00');
+
+  // Phase 7 & 8: Deterministic Transaction Gate, Razorpay & Invariant Failure States
+  const [gateLoading, setGateLoading] = useState(false);
+  const [gateBlockedReason, setGateBlockedReason] = useState<string | null>(null);
+  const [gateBlockedInfo, setGateBlockedInfo] = useState<GateBlockedInfo | null>(
+    null
+  );
+  const [verifiedReceipt, setVerifiedReceipt] = useState<{
+    paymentId: string;
+    orderId: string;
+    proposalId: string;
+    remainingInventory: number;
+    amount: number;
+    productName?: string;
+  } | null>(null);
+  const [checkoutOrderData, setCheckoutOrderData] = useState<{
+    orderId: string;
+    amount: number;
+    currency: string;
+    keyId: string;
+    testPaymentId?: string;
+    testSignature?: string;
+  } | null>(null);
 
   const fetchMerchantStatus = useCallback(async () => {
     try {
@@ -134,7 +199,11 @@ export default function AgentDemoPage() {
         }
         if (buyerRes.ok && isMounted) {
           const data = await buyerRes.json();
-          setRecentProposals(data.proposals || []);
+          const props = data.proposals || [];
+          setRecentProposals(props);
+          if (props.length > 0) {
+            setProposal((prev) => prev ?? props[0]);
+          }
         }
       } catch (e) {
         console.error(e);
@@ -148,11 +217,10 @@ export default function AgentDemoPage() {
 
   // Expiry Countdown Timer
   useEffect(() => {
-    if (!activeResponse?.proposal?.expiresAt) return;
+    const targetExpiresAt = proposal?.expiresAt || activeResponse?.proposal?.expiresAt;
+    if (!targetExpiresAt) return;
 
-    const expiresAtMs = new Date(
-      activeResponse.proposal.expiresAt
-    ).getTime();
+    const expiresAtMs = new Date(targetExpiresAt).getTime();
 
     const interval = setInterval(() => {
       const now = Date.now();
@@ -174,13 +242,18 @@ export default function AgentDemoPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [activeResponse?.proposal?.expiresAt]);
+  }, [proposal?.expiresAt, activeResponse?.proposal?.expiresAt]);
 
   const handleRunBuyer = async (promptQuery: string) => {
     const textToRun = promptQuery.trim();
     if (!textToRun || loading) return;
 
     setLoading(true);
+    setGateBlockedReason(null);
+    setGateBlockedInfo(null);
+    setVerifiedReceipt(null);
+    setCheckoutOrderData(null);
+
     try {
       const res = await fetch('/api/buyer', {
         method: 'POST',
@@ -191,6 +264,7 @@ export default function AgentDemoPage() {
       const data: BuyerApiResponse = await res.json();
       setActiveResponse(data);
       if (data.proposal) {
+        setProposal(data.proposal);
         setRecentProposals((prev) => [data.proposal!, ...prev.slice(0, 4)]);
       }
     } catch (err) {
@@ -263,6 +337,218 @@ export default function AgentDemoPage() {
     setExpandedTools((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
 
+  const handleVerifyPayment = async (payload: {
+    proposalId: string;
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) => {
+    setGateLoading(true);
+    try {
+      const res = await fetch('/api/transaction/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setGateBlockedReason(
+          `Payment Verification Error: ${data.error || 'Signature mismatch or transaction failure.'}`
+        );
+        setActiveResponse((prev) =>
+          prev && prev.proposal
+            ? {
+                ...prev,
+                proposal: {
+                  ...prev.proposal,
+                  status: 'EXPIRED',
+                },
+              }
+            : prev
+        );
+        fetchRecentProposals();
+        return;
+      }
+
+      setVerifiedReceipt({
+        paymentId: data.paymentId,
+        orderId: data.orderId,
+        proposalId: data.proposalId,
+        remainingInventory: data.remainingInventory,
+        amount: data.amount,
+        productName: data.productName,
+      });
+
+      setProposal((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev));
+      setActiveResponse((prev) =>
+        prev && prev.proposal
+          ? {
+              ...prev,
+              proposal: {
+                ...prev.proposal,
+                status: 'COMPLETED',
+              },
+            }
+          : prev
+      );
+      fetchRecentProposals();
+    } catch (err: unknown) {
+      console.error(err);
+      setGateBlockedReason(
+        err instanceof Error ? err.message : 'Payment verification network error'
+      );
+    } finally {
+      setGateLoading(false);
+    }
+  };
+
+  const openRazorpayCheckout = (orderData: {
+    orderId: string;
+    amount: number;
+    currency: string;
+    keyId: string;
+  }) => {
+    if (typeof window === 'undefined') return;
+    const RazorpayConstructor = (
+      window as unknown as {
+        Razorpay?: new (opts: Record<string, unknown>) => RazorpayInstance;
+      }
+    ).Razorpay;
+    if (!RazorpayConstructor) {
+      console.warn('Razorpay SDK not loaded in window');
+      return;
+    }
+
+    try {
+      const options: Record<string, unknown> = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'Sweet Crumbs',
+        description: `Order for ${proposal?.requestedQuantity || activeResponse?.proposal?.requestedQuantity || 1}x box(es)`,
+        order_id: orderData.orderId,
+        prefill: {
+          name: 'Demo Autonomous Buyer',
+          contact: '+91 8697774043',
+          email: 'buyer@agentready.demo',
+        },
+        theme: {
+          color: '#10b981',
+        },
+        handler: async function (response: RazorpayPaymentResponse) {
+          await handleVerifyPayment({
+            proposalId: proposal?.id || activeResponse?.proposal?.id || '',
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+        },
+        modal: {
+          ondismiss: function () {
+            console.log('Razorpay modal dismissed');
+          },
+        },
+      };
+
+      const rzp = new RazorpayConstructor(options);
+      rzp.on('payment.failed', function (resp: { error?: { description?: string } }) {
+        console.error('Razorpay payment failed:', resp.error);
+        setGateBlockedReason(
+          `Razorpay payment error: ${resp.error?.description || 'Failed'}`
+        );
+      });
+      rzp.open();
+    } catch (e) {
+      console.error('Error opening Razorpay modal:', e);
+    }
+  };
+
+  const handleProceedToGate = async () => {
+    const targetProposal = proposal || activeResponse?.proposal;
+    if (!targetProposal) return;
+    setGateLoading(true);
+    setGateBlockedReason(null);
+    setGateBlockedInfo(null);
+    setVerifiedReceipt(null);
+
+    try {
+      const res = await fetch('/api/transaction/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposalId: targetProposal.id }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error === 'TRANSACTION_BLOCKED') {
+        const failureReason =
+          data.reason ||
+          data.error ||
+          'Transaction proposal blocked by deterministic invariant gate.';
+        setGateBlockedReason(failureReason);
+        setGateBlockedInfo({
+          reason: failureReason,
+          violatedInvariant: data.violatedInvariant || 'INSUFFICIENT_INVENTORY',
+          requestedQuantity: data.requestedQuantity ?? targetProposal.requestedQuantity,
+          availableInventory: data.availableInventory ?? targetProposal.product?.inventory ?? 0,
+          auditLogId: data.auditLogId,
+          timestamp: data.timestamp || new Date().toISOString(),
+        });
+        setProposal((prev) => (prev ? { ...prev, status: 'BLOCKED' } : prev));
+        setActiveResponse((prev) =>
+          prev && prev.proposal
+            ? {
+                ...prev,
+                proposal: {
+                  ...prev.proposal,
+                  status: 'BLOCKED',
+                },
+              }
+            : prev
+        );
+        fetchRecentProposals();
+        return;
+      }
+
+      // Gate invariant checks passed -> Proposal is RESERVED
+      setCheckoutOrderData(data);
+      setProposal((prev) => (prev ? { ...prev, status: 'RESERVED' } : prev));
+      setActiveResponse((prev) =>
+        prev && prev.proposal
+          ? {
+              ...prev,
+              proposal: {
+                ...prev.proposal,
+                status: 'RESERVED',
+              },
+            }
+          : prev
+      );
+      fetchRecentProposals();
+
+      // Launch Razorpay modal using the returned orderId
+      await loadRazorpayScript();
+      openRazorpayCheckout(data);
+    } catch (err: unknown) {
+      console.error(err);
+      const errMsg =
+        err instanceof Error
+          ? err.message
+          : 'Failed to communicate with checkout gate.';
+      setGateBlockedReason(errMsg);
+      setGateBlockedInfo({
+        reason: errMsg,
+        violatedInvariant: 'GATE_NETWORK_FAILURE',
+        requestedQuantity: targetProposal.requestedQuantity,
+        availableInventory: targetProposal.product?.inventory ?? 0,
+      });
+    } finally {
+      setGateLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-200 flex flex-col">
       {/* Top Navbar */}
@@ -277,7 +563,7 @@ export default function AgentDemoPage() {
                 AgentReady
               </span>
               <span className="text-[10px] uppercase font-mono text-zinc-400">
-                Phase 6: Buyer Simulator
+                Phase 8: Audit Ledger & Gate Enforcement
               </span>
             </div>
           </Link>
@@ -296,6 +582,13 @@ export default function AgentDemoPage() {
             >
               <Bot className="w-3.5 h-3.5 text-emerald-400" />
               AI Buyer Playground
+            </Link>
+            <Link
+              href="/dashboard#audit-ledger"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-2"
+            >
+              <History className="w-3.5 h-3.5 text-zinc-400" />
+              Audit Ledger
             </Link>
             <Link
               href="/api/catalog"
@@ -582,7 +875,7 @@ export default function AgentDemoPage() {
           </div>
 
           {/* Active Proposal Card */}
-          {activeResponse?.proposal ? (
+          {proposal ? (
             <div className="rounded-2xl bg-zinc-900/90 border border-zinc-800 p-6 flex flex-col gap-5 shadow-xl">
               {/* Proposal Header */}
               <div className="flex items-center justify-between">
@@ -591,8 +884,20 @@ export default function AgentDemoPage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    STATUS: {activeResponse.proposal.status}
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold border ${
+                      proposal.status === 'COMPLETED'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                        : proposal.status === 'RESERVED'
+                        ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
+                        : proposal.status === 'BLOCKED'
+                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                        : proposal.status === 'EXPIRED'
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                        : 'bg-zinc-800 text-zinc-300 border-zinc-700'
+                    }`}
+                  >
+                    STATUS: {proposal.status}
                   </span>
                 </div>
 
@@ -603,16 +908,159 @@ export default function AgentDemoPage() {
                 </div>
               </div>
 
+              {/* High-Visibility Prominent Red Alert Card: Gate Blocked */}
+              {(gateBlockedInfo || gateBlockedReason) && (
+                <div className="p-5 rounded-2xl bg-rose-950/70 border-2 border-rose-500 text-rose-100 flex flex-col gap-3.5 shadow-2xl shadow-rose-950/60 animate-in fade-in zoom-in-95">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 text-rose-400 font-bold text-sm tracking-wide">
+                      <AlertOctagon className="w-5 h-5 text-rose-500 shrink-0" />
+                      <span>TRANSACTION BLOCKED BY GATE</span>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                      STATUS: BLOCKED
+                    </span>
+                  </div>
+
+                  {/* Deterministic Invariant Check Details */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 rounded-xl bg-black/60 border border-rose-500/30 text-xs font-mono">
+                    <div>
+                      <span className="text-zinc-400 block text-[10px] uppercase">
+                        Invariant Violated:
+                      </span>
+                      <span className="text-rose-400 font-bold">
+                        {gateBlockedInfo?.violatedInvariant || 'INSUFFICIENT_INVENTORY'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-400 block text-[10px] uppercase">
+                        Enforcement:
+                      </span>
+                      <span className="text-amber-300 font-semibold text-[11px]">
+                        Deterministic Invariant Check (Zero LLM authority)
+                      </span>
+                    </div>
+                    <div className="pt-2 border-t border-rose-900/40">
+                      <span className="text-zinc-400 block text-[10px] uppercase">
+                        Requested:
+                      </span>
+                      <span className="text-white font-bold">
+                        {gateBlockedInfo?.requestedQuantity ?? proposal.requestedQuantity} boxes
+                      </span>
+                    </div>
+                    <div className="pt-2 border-t border-rose-900/40">
+                      <span className="text-zinc-400 block text-[10px] uppercase">
+                        Available Stock:
+                      </span>
+                      <span className="text-rose-300 font-bold">
+                        {gateBlockedInfo?.availableInventory ?? proposal.product?.inventory ?? 0} boxes
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Gate Reason Message */}
+                  <p className="text-xs text-rose-200/90 font-mono leading-relaxed bg-rose-950/40 p-2.5 rounded-lg border border-rose-900/30">
+                    {gateBlockedInfo?.reason || gateBlockedReason}
+                  </p>
+
+                  {/* Log Reference */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-rose-500/20 text-[11px] text-zinc-400 font-mono">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-zinc-400">Log reference:</span>
+                      {gateBlockedInfo?.auditLogId ? (
+                        <span className="text-rose-300 font-bold">
+                          Event ID: {gateBlockedInfo.auditLogId.slice(0, 16)}...
+                        </span>
+                      ) : (
+                        <span className="text-zinc-400">Event: TRANSACTION_BLOCKED</span>
+                      )}
+                      {gateBlockedInfo?.timestamp && (
+                        <span className="text-zinc-400">
+                          • Timestamp:{' '}
+                          {new Date(gateBlockedInfo.timestamp).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false,
+                          })}
+                        </span>
+                      )}
+                    </div>
+                    <Link
+                      href="/dashboard#audit-ledger"
+                      className="text-rose-400 hover:text-rose-300 underline underline-offset-2 flex items-center gap-1 text-[11px]"
+                    >
+                      <span>View in Audit Ledger</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* High-Visibility Green Card: Verified Payment Receipt */}
+              {verifiedReceipt && (
+                <div className="p-5 rounded-xl bg-emerald-950/50 border-2 border-emerald-500 text-emerald-100 flex flex-col gap-4 shadow-xl shadow-emerald-950/40 animate-in zoom-in-95">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      PAYMENT VERIFIED & INVENTORY DEDUCTED
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      HMAC SHA-256 VALID
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 p-3.5 rounded-lg bg-black/50 border border-emerald-500/30 text-xs font-mono">
+                    <div>
+                      <span className="text-zinc-400 block text-[10px]">RAZORPAY PAYMENT ID</span>
+                      <span className="text-white font-bold truncate block">{verifiedReceipt.paymentId}</span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-400 block text-[10px]">RAZORPAY ORDER ID</span>
+                      <span className="text-white font-bold truncate block">{verifiedReceipt.orderId}</span>
+                    </div>
+                    <div className="pt-2 border-t border-zinc-800">
+                      <span className="text-zinc-400 block text-[10px]">SETTLEMENT AMOUNT</span>
+                      <span className="text-emerald-400 font-bold">₹{(verifiedReceipt.amount / 100).toFixed(2)} INR</span>
+                    </div>
+                    <div className="pt-2 border-t border-zinc-800">
+                      <span className="text-zinc-400 block text-[10px]">REMAINING VERIFIED INVENTORY</span>
+                      <span className="text-cyan-400 font-bold">{verifiedReceipt.remainingInventory} units in stock</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-1">
+                    <Link
+                      href="/dashboard"
+                      className="w-full sm:flex-1 py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs text-center flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Store className="w-3.5 h-3.5" />
+                      View Immutable Audit Logs in Dashboard
+                      <ExternalLink className="w-3 h-3" />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVerifiedReceipt(null);
+                        setCheckoutOrderData(null);
+                      }}
+                      className="py-2.5 px-4 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors cursor-pointer"
+                    >
+                      Dismiss Receipt
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Proposal ID */}
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800 text-xs font-mono">
                 <span className="text-zinc-400">Proposal ID:</span>
                 <button
                   type="button"
-                  onClick={() => copyProposalId(activeResponse.proposal?.id || '')}
+                  onClick={() => copyProposalId(proposal.id)}
                   className="flex items-center gap-1.5 text-zinc-200 hover:text-white"
                 >
                   <span className="truncate max-w-[220px]">
-                    {activeResponse.proposal.id}
+                    {proposal.id}
                   </span>
                   {copiedId ? (
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -622,21 +1070,23 @@ export default function AgentDemoPage() {
                 </button>
               </div>
 
-              {/* Product & Quantity Details */}
+              {/* Proposal Summary Card: Product Name, Qty, Total in ₹, Status */}
               <div className="p-4 rounded-xl bg-zinc-950/90 border border-zinc-800 flex flex-col gap-3">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-base font-bold text-white">
-                      {activeResponse.proposalData?.productName ||
-                        activeResponse.proposal.product?.name}
+                      {proposal.product?.name ||
+                        activeResponse?.proposalData?.productName ||
+                        'Verified Product'}
                     </h3>
                     <span className="text-xs text-zinc-400">
-                      Merchant: {activeResponse.proposalData?.merchantName ||
-                        activeResponse.proposal.merchant?.name}
+                      Merchant: {proposal.merchant?.name ||
+                        activeResponse?.proposalData?.merchantName ||
+                        'Sweet Crumbs'}
                     </span>
                   </div>
                   <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
-                    ₹{activeResponse.proposal.offeredPrice} / box
+                    ₹{proposal.offeredPrice} / box
                   </span>
                 </div>
 
@@ -644,25 +1094,31 @@ export default function AgentDemoPage() {
                   <div>
                     <span className="text-zinc-400 block">Requested Quantity:</span>
                     <span className="text-sm font-bold text-white">
-                      {activeResponse.proposal.requestedQuantity} box(es)
+                      {proposal.requestedQuantity} box(es)
                     </span>
                   </div>
                   <div>
                     <span className="text-zinc-400 block">Available In Stock:</span>
                     <span className="text-sm font-bold text-zinc-300">
-                      {activeResponse.proposalData?.availableInventory ??
-                        activeResponse.proposal.product?.inventory ??
-                        'Unknown'} units
+                      {verifiedReceipt
+                        ? verifiedReceipt.remainingInventory
+                        : activeResponse?.proposalData?.availableInventory ??
+                          proposal.product?.inventory ??
+                          'Unknown'}{' '}
+                      units
                     </span>
                   </div>
                 </div>
 
                 {/* Overstock Warning */}
-                {activeResponse.proposalData?.inventoryExceeded && (
+                {((activeResponse?.proposalData?.inventoryExceeded) ||
+                  (proposal.product?.inventory !== null &&
+                    proposal.product?.inventory !== undefined &&
+                    proposal.requestedQuantity > proposal.product.inventory)) && (
                   <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 flex items-center gap-2 mt-1">
                     <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                     <span>
-                      Requested quantity ({activeResponse.proposal.requestedQuantity}) exceeds verified available inventory. Transaction gate will flag this!
+                      Requested quantity ({proposal.requestedQuantity}) exceeds verified available inventory. Transaction gate will flag this!
                     </span>
                   </div>
                 )}
@@ -675,35 +1131,126 @@ export default function AgentDemoPage() {
                     Calculated Total
                   </span>
                   <div className="text-3xl font-extrabold text-white mt-0.5">
-                    ₹{activeResponse.proposal.calculatedTotal}
+                    ₹{proposal.calculatedTotal}
                     <span className="text-xs text-zinc-400 font-normal ml-1">
                       INR
                     </span>
                   </div>
                 </div>
-                <div className="text-right text-xs text-zinc-400">
-                  <span>
-                    {activeResponse.proposal.requestedQuantity} × ₹
-                    {activeResponse.proposal.offeredPrice}
-                  </span>
+                <div className="text-right text-xs text-zinc-400 font-mono">
+                  <div>
+                    {proposal.requestedQuantity} × ₹{proposal.offeredPrice}
+                  </div>
+                  <div className="text-[11px] text-zinc-500 mt-0.5">
+                    Status: {proposal.status}
+                  </div>
                 </div>
               </div>
 
-              {/* Action Button: Proceed to Transaction Gate */}
+              {/* Active Checkout Button */}
+              <button
+                onClick={handleProceedToGate}
+                disabled={
+                  gateLoading ||
+                  proposal.status === 'BLOCKED' ||
+                  proposal.status === 'COMPLETED'
+                }
+                className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-800 disabled:text-zinc-500 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 shadow cursor-pointer disabled:cursor-not-allowed transition-colors"
+              >
+                {gateLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Processing Transaction Gate...
+                  </>
+                ) : proposal.status === 'BLOCKED' ? (
+                  'Transaction Blocked by Gate ⛔'
+                ) : proposal.status === 'COMPLETED' ? (
+                  'Transaction Already Settled ✓'
+                ) : (
+                  'Proceed to Transaction Gate →'
+                )}
+              </button>
+
+              {/* Settlement Actions / Transaction Gate */}
               <div className="flex flex-col gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    alert(
-                      `Phase 7 Gate Triggered! Proposal ${activeResponse.proposal?.id} is queued for final deterministic invariant validation and Razorpay order reservation.`
-                    );
-                  }}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950 cursor-pointer"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  Proceed to Transaction Gate (Phase 7)
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </button>
+                {/* When Proposal is RESERVED and ready for settlement */}
+                {checkoutOrderData &&
+                  proposal.status === 'RESERVED' &&
+                  !verifiedReceipt && (
+                    <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/40 text-cyan-100 flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs font-mono">
+                          <Lock className="w-4 h-4 text-cyan-400" />
+                          GATE PASSED • INVENTORY HELD (10 MIN)
+                        </div>
+                        <span className="text-[11px] font-mono text-cyan-300">
+                          {checkoutOrderData.orderId.slice(0, 18)}...
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-zinc-300">
+                        All 5 deterministic invariants verified. Choose checkout settlement path:
+                      </p>
+
+                      <div className="flex flex-col gap-2">
+                        {/* 1. Real Razorpay Modal */}
+                        <button
+                          type="button"
+                          disabled={gateLoading}
+                          onClick={() => openRazorpayCheckout(checkoutOrderData)}
+                          className="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          Launch Razorpay Modal (₹{(checkoutOrderData.amount / 100).toFixed(2)})
+                        </button>
+
+                        {/* 2. Simulation buttons */}
+                        {checkoutOrderData.testSignature && (
+                          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-zinc-800">
+                            <button
+                              type="button"
+                              disabled={gateLoading}
+                              onClick={() =>
+                                handleVerifyPayment({
+                                  proposalId: proposal.id,
+                                  razorpay_order_id: checkoutOrderData.orderId,
+                                  razorpay_payment_id:
+                                    checkoutOrderData.testPaymentId ||
+                                    `pay_sim_${Date.now()}`,
+                                  razorpay_signature:
+                                    checkoutOrderData.testSignature || '',
+                                })
+                              }
+                              className="py-2 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-emerald-400 border border-emerald-500/30 font-mono text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Verify (Valid HMAC)
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={gateLoading}
+                              onClick={() =>
+                                handleVerifyPayment({
+                                  proposalId: proposal.id,
+                                  razorpay_order_id: checkoutOrderData.orderId,
+                                  razorpay_payment_id:
+                                    checkoutOrderData.testPaymentId ||
+                                    `pay_sim_${Date.now()}`,
+                                  razorpay_signature:
+                                    'invalid_tampered_signature_hex_000',
+                                })
+                              }
+                              className="py-2 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-rose-400 border border-rose-500/30 font-mono text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <AlertOctagon className="w-3.5 h-3.5" />
+                              Test Invalid HMAC
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                 {/* Toggle Raw JSON view */}
                 <button
@@ -717,7 +1264,7 @@ export default function AgentDemoPage() {
 
                 {showJson && (
                   <pre className="p-3 rounded-xl bg-black border border-zinc-800 text-[10px] text-zinc-300 font-mono overflow-x-auto max-h-60">
-                    {JSON.stringify(activeResponse.proposal, null, 2)}
+                    {JSON.stringify(proposal, null, 2)}
                   </pre>
                 )}
               </div>
@@ -744,7 +1291,27 @@ export default function AgentDemoPage() {
                 {recentProposals.map((p) => (
                   <div
                     key={p.id}
-                    className="py-2.5 flex items-center justify-between text-xs font-mono"
+                    onClick={() => {
+                      setProposal(p);
+                      if (p.status === 'BLOCKED') {
+                        setGateBlockedReason(
+                          'Transaction proposal blocked by deterministic invariant gate.'
+                        );
+                        setGateBlockedInfo({
+                          reason:
+                            'Transaction proposal blocked by deterministic invariant gate.',
+                          violatedInvariant: 'INSUFFICIENT_INVENTORY',
+                          requestedQuantity: p.requestedQuantity,
+                          availableInventory: p.product?.inventory ?? 0,
+                        });
+                      } else {
+                        setGateBlockedReason(null);
+                        setGateBlockedInfo(null);
+                      }
+                      setVerifiedReceipt(null);
+                      setCheckoutOrderData(null);
+                    }}
+                    className="py-2.5 flex items-center justify-between text-xs font-mono cursor-pointer hover:bg-zinc-800/60 px-2 rounded-lg transition-colors"
                   >
                     <div>
                       <span className="text-white font-semibold">

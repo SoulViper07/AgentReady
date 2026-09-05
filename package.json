@@ -12,7 +12,9 @@
     "test:ingest": "ts-node scripts/test-ingest.ts",
     "test:readiness": "ts-node scripts/test-readiness.ts",
     "test:phase5": "ts-node scripts/test-phase5-remediation.ts",
-    "test:phase6": "ts-node scripts/test-phase6-buyer.ts"
+    "test:phase6": "ts-node scripts/test-phase6-buyer.ts",
+    "test:phase7": "ts-node scripts/test-phase7-transaction.ts",
+    "test:phase8": "ts-node scripts/test-phase8-audit.ts"
   },
   "dependencies": {
     "@google/genai": "^2.21.0",
