@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -16,6 +17,8 @@ import {
   FileCheck2,
   Loader2,
   Lock,
+  Bot,
+  ExternalLink,
 } from 'lucide-react';
 import { IssueCard } from '../../components/IssueCard';
 
@@ -265,23 +268,50 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800/80 px-6 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm tracking-tight text-white">
-                AgentReady
-              </span>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                Fintech Orchestration
-              </span>
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <p className="text-xs text-zinc-400 font-medium">
-              Merchant Remediation & Verification Console
-            </p>
-          </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm tracking-tight text-white">
+                  AgentReady
+                </span>
+                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                  Fintech Orchestration
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 font-medium">
+                Merchant Remediation & Verification Console
+              </p>
+            </div>
+          </Link>
+
+          <nav className="hidden md:flex items-center gap-1 border-l border-zinc-800 pl-6">
+            <Link
+              href="/dashboard"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800/80 text-emerald-400 border border-emerald-500/20 flex items-center gap-2"
+            >
+              <Store className="w-3.5 h-3.5 text-emerald-400" />
+              Remediation Dashboard
+            </Link>
+            <Link
+              href="/agent-demo"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-2"
+            >
+              <Bot className="w-3.5 h-3.5 text-zinc-400" />
+              AI Buyer Playground
+            </Link>
+            <Link
+              href="/api/catalog"
+              target="_blank"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-1.5"
+            >
+              Catalog API
+              <ExternalLink className="w-3 h-3 text-zinc-400" />
+            </Link>
+          </nav>
         </div>
 
         <div className="flex items-center gap-3">

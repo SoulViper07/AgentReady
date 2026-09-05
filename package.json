@@ -11,7 +11,8 @@
     "postinstall": "prisma skills sync || exit 0",
     "test:ingest": "ts-node scripts/test-ingest.ts",
     "test:readiness": "ts-node scripts/test-readiness.ts",
-    "test:phase5": "ts-node scripts/test-phase5-remediation.ts"
+    "test:phase5": "ts-node scripts/test-phase5-remediation.ts",
+    "test:phase6": "ts-node scripts/test-phase6-buyer.ts"
   },
   "dependencies": {
     "@google/genai": "^2.21.0",
