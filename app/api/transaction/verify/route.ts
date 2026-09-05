@@ -136,6 +136,8 @@ export async function POST(req: NextRequest) {
       remainingInventory: updatedProduct.inventory,
       productName: order.proposal.product.name,
       amount: order.amount,
+      signature: razorpay_signature,
+      calculatedHmac: generatedSignature,
     });
   } catch (error: unknown) {
     console.error('Verify API error:', error);

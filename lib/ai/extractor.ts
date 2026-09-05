@@ -252,12 +252,12 @@ ${csvData}
 
 Extract the structured catalog following the adversarial instructions and strict null rules. Output strictly JSON.`;
 
-  // 1. Attempt Gemini 2.5 Flash if Gemini/AI key is provided
+  // 1. Attempt Gemini 3.6 Flash if Gemini/AI key is provided
   if (geminiKey) {
     try {
       const ai = new GoogleGenAI({ apiKey: geminiKey });
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.6-flash',
         contents: userPrompt,
         config: {
           systemInstruction: SYSTEM_PROMPT,

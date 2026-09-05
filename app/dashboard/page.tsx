@@ -18,6 +18,8 @@ import {
 import { IssueCard } from '../../components/IssueCard';
 import { AuditFeed } from '../../components/AuditFeed';
 import { Navbar } from '../../components/Navbar';
+import { AuthorityTag } from '../../components/AuthorityTag';
+import { PipelineRail } from '../../components/PipelineRail';
 
 interface MerchantData {
   id: string;
@@ -255,6 +257,17 @@ export default function DashboardPage() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-8">
+        {/* Top Pipeline Rail Tracker */}
+        <PipelineRail
+          merchantStatus={merchant?.transactionStatus || 'NOT_READY'}
+          readinessScore={merchant?.readinessScore || 0}
+          unresolvedIssuesCount={unresolvedIssues.length}
+          verifiedProductsCount={
+            products.filter((p) => p.priceVerified && p.inventoryVerified).length
+          }
+          totalProductsCount={products.length}
+        />
+
         {/* Merchant Header Card */}
         <section className="rounded-2xl bg-gradient-to-r from-zinc-900 via-zinc-900 to-zinc-900/60 border border-zinc-800 p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
@@ -328,9 +341,16 @@ export default function DashboardPage() {
 
             {/* Invariant Hard Gates */}
             <div className="mt-6 pt-5 border-t border-zinc-800/80 flex flex-col gap-2.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                Invariant Hard Gates
-              </span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  Invariant Hard Gates
+                </span>
+                <AuthorityTag
+                  type="FINTECH_GATE"
+                  compact
+                  customLabel="Zero-LLM Hard Gates"
+                />
+              </div>
 
               <div className="flex flex-col gap-2 text-xs">
                 <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/60 border border-zinc-800">
@@ -405,13 +425,21 @@ export default function DashboardPage() {
           {/* Category Breakdown Bars: 8 Cols */}
           <div className="lg:col-span-8 rounded-2xl bg-zinc-900/90 border border-zinc-800 p-6 shadow-xl flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
-                  Deterministic Score Model Breakdown
-                </h3>
-                <span className="text-xs font-mono text-zinc-400">
-                  5 Categories × 20 pts Max
-                </span>
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
+                    Deterministic Score Model Breakdown
+                  </h3>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    100-point index calculated across 5 strict categories (20 pts max each)
+                  </p>
+                </div>
+                <AuthorityTag
+                  type="DETERMINISTIC"
+                  compact
+                  customLabel="Zero-LLM Math Rules"
+                  tooltip="Calculated using strict mathematical formulas. Zero LLM scoring bias."
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
@@ -419,6 +447,14 @@ export default function DashboardPage() {
                 <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 flex flex-col gap-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-zinc-300 font-medium">Product Data</span>
+                    <AuthorityTag
+                      type="DETERMINISTIC"
+                      compact
+                      tooltip="Calculated using strict mathematical formulas. Zero LLM scoring bias."
+                    />
+                  </div>
+                  <div className="flex items-baseline justify-between text-xs">
+                    <span className="text-[11px] text-zinc-400 font-mono">Weight (20%)</span>
                     <span className="font-mono font-bold text-zinc-100">
                       {scoreBreakdown?.productData || 0} / 20
                     </span>
@@ -442,6 +478,14 @@ export default function DashboardPage() {
                     <span className="text-zinc-300 font-medium">
                       Price Reliability
                     </span>
+                    <AuthorityTag
+                      type="DETERMINISTIC"
+                      compact
+                      tooltip="Calculated using strict mathematical formulas. Zero LLM scoring bias."
+                    />
+                  </div>
+                  <div className="flex items-baseline justify-between text-xs">
+                    <span className="text-[11px] text-zinc-400 font-mono">Weight (20%)</span>
                     <span className="font-mono font-bold text-zinc-100">
                       {scoreBreakdown?.priceReliability || 0} / 20
                     </span>
@@ -465,6 +509,14 @@ export default function DashboardPage() {
                     <span className="text-zinc-300 font-medium">
                       Inventory Confidence
                     </span>
+                    <AuthorityTag
+                      type="DETERMINISTIC"
+                      compact
+                      tooltip="Calculated using strict mathematical formulas. Zero LLM scoring bias."
+                    />
+                  </div>
+                  <div className="flex items-baseline justify-between text-xs">
+                    <span className="text-[11px] text-zinc-400 font-mono">Weight (20%)</span>
                     <span className="font-mono font-bold text-zinc-100">
                       {scoreBreakdown?.inventoryConfidence || 0} / 20
                     </span>
@@ -488,6 +540,14 @@ export default function DashboardPage() {
                     <span className="text-zinc-300 font-medium">
                       Policy Readiness
                     </span>
+                    <AuthorityTag
+                      type="DETERMINISTIC"
+                      compact
+                      tooltip="Calculated using strict mathematical formulas. Zero LLM scoring bias."
+                    />
+                  </div>
+                  <div className="flex items-baseline justify-between text-xs">
+                    <span className="text-[11px] text-zinc-400 font-mono">Weight (20%)</span>
                     <span className="font-mono font-bold text-zinc-100">
                       {scoreBreakdown?.policyReadiness || 0} / 20
                     </span>
@@ -511,6 +571,14 @@ export default function DashboardPage() {
                     <span className="text-zinc-300 font-medium">
                       Data Consistency
                     </span>
+                    <AuthorityTag
+                      type="DETERMINISTIC"
+                      compact
+                      tooltip="Calculated using strict mathematical formulas. Zero LLM scoring bias."
+                    />
+                  </div>
+                  <div className="flex items-baseline justify-between text-xs">
+                    <span className="text-[11px] text-zinc-400 font-mono">Weight (20%)</span>
                     <span className="font-mono font-bold text-zinc-100">
                       {scoreBreakdown?.dataConsistency || 0} / 20
                     </span>
