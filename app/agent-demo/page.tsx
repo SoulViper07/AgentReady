@@ -8,8 +8,6 @@ import {
   ShoppingCart,
   Clock,
   AlertTriangle,
-  Sparkles,
-  RefreshCw,
   Send,
   Copy,
   Check,
@@ -23,8 +21,8 @@ import {
   CheckCircle2,
   AlertOctagon,
   Lock,
-  History,
 } from 'lucide-react';
+import { Navbar } from '../../components/Navbar';
 
 interface GateBlockedInfo {
   reason: string;
@@ -552,84 +550,24 @@ export default function AgentDemoPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-200 flex flex-col">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800/80 px-6 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <span className="font-bold text-sm tracking-tight text-white block">
-                AgentReady
-              </span>
-              <span className="text-[10px] uppercase font-mono text-zinc-400">
-                Phase 8: Audit Ledger & Gate Enforcement
-              </span>
-            </div>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-1 border-l border-zinc-800 pl-6">
-            <Link
-              href="/dashboard"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-2"
-            >
-              <Store className="w-3.5 h-3.5" />
-              Remediation Dashboard
-            </Link>
-            <Link
-              href="/agent-demo"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800/80 text-emerald-400 border border-emerald-500/20 flex items-center gap-2"
-            >
-              <Bot className="w-3.5 h-3.5 text-emerald-400" />
-              AI Buyer Playground
-            </Link>
-            <Link
-              href="/dashboard#audit-ledger"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-2"
-            >
-              <History className="w-3.5 h-3.5 text-zinc-400" />
-              Audit Ledger
-            </Link>
-            <Link
-              href="/api/catalog"
-              target="_blank"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-1.5"
-            >
-              <Code className="w-3.5 h-3.5" />
-              Catalog API
-              <ExternalLink className="w-3 h-3 text-zinc-400" />
-            </Link>
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono">
-            <span className="text-zinc-400">Sweet Crumbs:</span>
-            {merchantStatus === 'READY' ? (
-              <span className="text-emerald-400 font-bold flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                READY ({merchantScore})
-              </span>
-            ) : (
-              <span className="text-rose-400 font-bold flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-400" />
-                {merchantStatus} ({merchantScore})
-              </span>
-            )}
-          </div>
-
-          <button
-            onClick={() => {
-              fetchMerchantStatus();
-              fetchRecentProposals();
-            }}
-            className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 transition-all"
-            title="Refresh status"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </header>
+      <Navbar
+        merchantStatus={merchantStatus}
+        merchantScore={merchantScore}
+        onReset={async () => {
+          await fetchMerchantStatus();
+          await fetchRecentProposals();
+          setProposal(null);
+          setActiveResponse(null);
+          setVerifiedReceipt(null);
+          setCheckoutOrderData(null);
+          setGateBlockedReason(null);
+          setGateBlockedInfo(null);
+        }}
+        onRefresh={async () => {
+          await fetchMerchantStatus();
+          await fetchRecentProposals();
+        }}
+      />
 
       {/* Readiness Alert Banner if NOT_READY */}
       {merchantStatus === 'NOT_READY' && (

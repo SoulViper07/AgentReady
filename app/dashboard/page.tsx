@@ -1,29 +1,23 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import {
-  ShieldCheck,
-  ShieldAlert,
   AlertTriangle,
-  RotateCcw,
   Store,
   MapPin,
   Phone,
   Layers,
   CheckCircle2,
   XCircle,
-  Sparkles,
-  FileCheck2,
   Loader2,
   Lock,
-  Bot,
-  ExternalLink,
-  History,
-  Code,
+  FileCheck2,
+  ShieldCheck,
+  ShieldAlert,
 } from 'lucide-react';
 import { IssueCard } from '../../components/IssueCard';
 import { AuditFeed } from '../../components/AuditFeed';
+import { Navbar } from '../../components/Navbar';
 
 interface MerchantData {
   id: string;
@@ -85,7 +79,6 @@ interface IssueItem {
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
-  const [resetting, setResetting] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [merchant, setMerchant] = useState<MerchantData | null>(null);
   const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdown | null>(
@@ -199,24 +192,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleResetDemo = async () => {
-    if (resetting) return;
-    setResetting(true);
-    setStatusMessage('Resetting demo to unverified baseline...');
-    try {
-      const res = await fetch('/api/seed/reset', { method: 'POST' });
-      if (!res.ok) throw new Error('Reset failed');
-      await fetchReadiness();
-      setStatusMessage('Demo baseline restored (36/100, NOT_READY).');
-      setTimeout(() => setStatusMessage(null), 4000);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Reset failed';
-      setStatusMessage(msg);
-    } finally {
-      setResetting(false);
-    }
-  };
-
   const unresolvedIssues = issues.filter((i) => !i.resolved);
   const criticalIssues = unresolvedIssues.filter(
     (i) => i.severity === 'CRITICAL'
@@ -270,80 +245,13 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800/80 px-6 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm tracking-tight text-white">
-                  AgentReady
-                </span>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                  Fintech Orchestration
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400 font-medium">
-                Merchant Remediation & Verification Console
-              </p>
-            </div>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-1 border-l border-zinc-800 pl-6">
-            <Link
-              href="/dashboard"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800/80 text-emerald-400 border border-emerald-500/20 flex items-center gap-2"
-            >
-              <Store className="w-3.5 h-3.5 text-emerald-400" />
-              Remediation Dashboard
-            </Link>
-            <Link
-              href="/agent-demo"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-2"
-            >
-              <Bot className="w-3.5 h-3.5 text-zinc-400" />
-              AI Buyer Playground
-            </Link>
-            <Link
-              href="/api/catalog"
-              target="_blank"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-1.5"
-            >
-              <Code className="w-3.5 h-3.5 text-zinc-400" />
-              Catalog API
-              <ExternalLink className="w-3 h-3 text-zinc-400" />
-            </Link>
-            <a
-              href="#audit-ledger"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-2"
-            >
-              <History className="w-3.5 h-3.5 text-zinc-400" />
-              Audit Ledger
-            </a>
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {statusMessage && (
-            <span className="text-xs font-mono text-emerald-400 animate-fade-in">
-              {statusMessage}
-            </span>
-          )}
-          <button
-            onClick={handleResetDemo}
-            disabled={resetting || actionLoading}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 text-xs font-medium transition-all disabled:opacity-50"
-            title="Reset demo baseline"
-          >
-            <RotateCcw
-              className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`}
-            />
-            Reset Demo Baseline
-          </button>
-        </div>
-      </header>
+      <Navbar
+        merchantStatus={merchant?.transactionStatus}
+        merchantScore={merchant?.readinessScore}
+        onReset={fetchReadiness}
+        onRefresh={fetchReadiness}
+        statusMessage={statusMessage}
+      />
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-8">
