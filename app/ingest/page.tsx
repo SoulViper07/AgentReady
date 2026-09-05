@@ -28,6 +28,7 @@ import { Navbar } from '../../components/Navbar';
 import { AuthorityTag } from '../../components/AuthorityTag';
 import { TiltCard } from '../../components/ui/TiltCard';
 import { IngestProgressBar } from '../../components/IngestProgressBar';
+import { motion } from 'framer-motion';
 
 interface ExtractedProduct {
   name: string;
@@ -427,43 +428,37 @@ export default function IngestionStudioPage() {
           {/* ======================================================== */}
           <div className="lg:col-span-5 flex flex-col gap-5">
             {/* Input Method Switcher */}
-            <div className="rounded-2xl bg-[#181A20] border border-white/[0.08] p-1.5 shadow-xl shadow-black/20 grid grid-cols-3 gap-1">
-              <button
-                type="button"
-                onClick={() => setActiveTab('image')}
-                className={`py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeTab === 'image'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40'
-                    : 'text-stone-400 hover:text-[#F8F9FA]'
-                }`}
-              >
-                <ImageIcon className="w-3.5 h-3.5" />
-                <span>Image OCR</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('text')}
-                className={`py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeTab === 'text'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40'
-                    : 'text-stone-400 hover:text-[#F8F9FA]'
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Raw Text</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('presets')}
-                className={`py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeTab === 'presets'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40'
-                    : 'text-stone-400 hover:text-[#F8F9FA]'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Presets</span>
-              </button>
+            <div className="rounded-2xl bg-[#181A20] border border-white/[0.08] p-1.5 shadow-xl shadow-black/20 grid grid-cols-3 gap-1 relative">
+              {[
+                { id: 'image', label: 'Image OCR', icon: ImageIcon },
+                { id: 'text', label: 'Raw Text', icon: FileText },
+                { id: 'presets', label: 'Presets', icon: Sparkles },
+              ].map((tab) => {
+                const isActive = activeTab === tab.id;
+                const TabIcon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id as 'image' | 'text' | 'presets')}
+                    className={`relative py-2 px-2 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97] tactile-btn ${
+                      isActive
+                        ? 'text-white'
+                        : 'text-stone-400 hover:text-[#F8F9FA]'
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeIngestTab"
+                        className="absolute inset-0 bg-emerald-600 rounded-xl shadow-md shadow-emerald-950/40 -z-0"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <TabIcon className="w-3.5 h-3.5 relative z-10" />
+                    <span className="relative z-10">{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* TAB 1: Image Dropzone (Vision OCR) */}
@@ -689,7 +684,7 @@ export default function IngestionStudioPage() {
                   type="button"
                   onClick={handleExtractPreview}
                   disabled={isExtracting || isCommitting}
-                  className="flex-1 min-h-[44px] px-5 py-2.5 rounded-xl bg-[#181A20] hover:bg-[#20232B] disabled:opacity-50 text-[#F8F9FA] font-semibold text-xs flex items-center justify-center gap-2 border border-white/[0.1] shadow-lg shadow-black/20 transition-all cursor-pointer"
+                  className="flex-1 min-h-[44px] px-5 py-2.5 rounded-xl bg-[#181A20] hover:bg-[#20232B] disabled:opacity-50 text-[#F8F9FA] font-semibold text-xs flex items-center justify-center gap-2 border border-white/[0.1] shadow-lg shadow-black/20 transition-all cursor-pointer active:scale-[0.97] tactile-btn"
                 >
                   <Eye className="w-4 h-4 text-amber-400" />
                   <span>Run Extraction Preview</span>
@@ -699,7 +694,7 @@ export default function IngestionStudioPage() {
                   type="button"
                   onClick={handleCommitToCatalog}
                   disabled={isExtracting || isCommitting}
-                  className="flex-1 min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
+                  className="flex-1 min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer active:scale-[0.97] tactile-btn"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>Push Directly to Store</span>

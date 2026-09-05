@@ -1178,20 +1178,25 @@ export default function AgentDemoPage() {
                   </div>
                 </div>
 
-                {/* 2. Gate Banner (Status Strip) */}
+                {/* 2. Gate Banner (Status Strip) with Precision Shake & Warning Flash */}
                 {gateBlockedInfo || gateBlockedReason || proposal.status === 'BLOCKED' ? (
-                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 flex flex-col gap-2.5 shadow-md shadow-black/20 animate-in fade-in zoom-in-95">
+                  <motion.div
+                    initial={{ x: 0 }}
+                    animate={{ x: [0, -6, 6, -4, 4, -1, 1, 0] }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 flex flex-col gap-2.5 shadow-md shadow-black/20 animate-rose-flash"
+                  >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs font-mono">
-                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                      <div className="flex items-center gap-2 text-rose-300 font-semibold text-xs font-mono">
+                        <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                         <span>DETERMINISTIC GATE CONSTRAINT ACTIVE</span>
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
                         STATUS: BLOCKED
                       </span>
                     </div>
 
-                    <p className="text-xs text-amber-100 font-mono leading-relaxed bg-[#121316]/80 p-2.5 rounded-lg border border-amber-500/20">
+                    <p className="text-xs text-rose-100 font-mono leading-relaxed bg-[#121316]/80 p-2.5 rounded-lg border border-rose-500/20">
                       {gateBlockedInfo?.reason ||
                         gateBlockedReason ||
                         'Transaction proposal blocked by deterministic invariant gate.'}
@@ -1205,24 +1210,29 @@ export default function AgentDemoPage() {
                         </div>
                         <div>
                           <span className="text-stone-500 block text-[10px] uppercase">Available Stock:</span>
-                          <span className="text-amber-300 font-bold">{gateBlockedInfo.availableInventory} boxes</span>
+                          <span className="text-rose-300 font-bold">{gateBlockedInfo.availableInventory} boxes</span>
                         </div>
                       </div>
                     )}
 
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1 border-t border-amber-500/20 text-[11px] text-stone-400 font-mono">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1 border-t border-rose-500/20 text-[11px] text-stone-400 font-mono">
                       <span>Zero LLM authority in transaction gate rejection</span>
                       <Link
                         href="/dashboard#audit-ledger"
-                        className="text-amber-400 hover:text-amber-300 underline underline-offset-2 flex items-center gap-1"
+                        className="text-rose-400 hover:text-rose-300 underline underline-offset-2 flex items-center gap-1"
                       >
                         <span>View in Audit Ledger</span>
                         <ExternalLink className="w-3 h-3" />
                       </Link>
                     </div>
-                  </div>
+                  </motion.div>
                 ) : (
-                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-2 shadow-sm">
+                  <motion.div
+                    initial={{ opacity: 0, y: 3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-2 shadow-sm"
+                  >
                     <div className="flex items-center gap-2 font-mono text-xs font-semibold">
                       <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span>🛡️ Deterministic Invariants Validated — Ready for Razorpay</span>
@@ -1230,17 +1240,27 @@ export default function AgentDemoPage() {
                     <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                       PASSED
                     </span>
-                  </div>
+                  </motion.div>
                 )}
 
-                {/* 3. Verified Payment Receipt (Minimal Digital Receipt with HMAC Proof) */}
+                {/* 3. Verified Payment Receipt (Minimal Digital Receipt with HMAC Proof & Micro-Spring Bounce) */}
                 {verifiedReceipt && (
-                  <div className="p-5 rounded-2xl bg-[#141519] border-2 border-emerald-500/60 text-stone-100 flex flex-col gap-4 shadow-2xl shadow-emerald-950/30 animate-in zoom-in-95">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                    className="p-5 rounded-2xl bg-[#141519] border-2 border-emerald-500/60 text-stone-100 flex flex-col gap-4 shadow-2xl shadow-emerald-950/30 animate-emerald-ripple"
+                  >
                     <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
                       <div className="flex items-center gap-2.5 text-emerald-400 font-semibold text-sm">
-                        <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
+                        <motion.div
+                          initial={{ scale: 0.7, opacity: 0 }}
+                          animate={{ scale: [0.7, 1.15, 1], opacity: 1 }}
+                          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                          className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shadow-sm"
+                        >
                           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        </div>
+                        </motion.div>
                         <span>Payment Verified &amp; Inventory Settled</span>
                       </div>
                       <AuthorityTag
@@ -1318,7 +1338,7 @@ export default function AgentDemoPage() {
                         Dismiss Receipt
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
 
                 {/* 4. Itemized Product Summary Row & Policy line */}
@@ -1888,8 +1908,11 @@ export default function AgentDemoPage() {
                           {activeResponse.thoughtProcess.map((step, idx) => {
                             const style = getThoughtStyle(step);
                             return (
-                              <div
+                              <motion.div
                                 key={idx}
+                                initial={{ opacity: 0, x: -4 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.18, delay: idx * 0.03 }}
                                 className="flex items-start gap-2.5 p-2 rounded-lg bg-[#141519] border border-white/[0.04] text-[11px]"
                               >
                                 <span
@@ -1900,7 +1923,7 @@ export default function AgentDemoPage() {
                                 <span className={`${style.textColor} leading-relaxed font-mono flex-1`}>
                                   {step}
                                 </span>
-                              </div>
+                              </motion.div>
                             );
                           })}
                         </div>

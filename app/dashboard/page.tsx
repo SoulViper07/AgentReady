@@ -387,22 +387,22 @@ export default function DashboardPage() {
     switch (status) {
       case 'READY':
         return (
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-breathe" />
             <span>Transactable by AI Buyers</span>
           </div>
         );
       case 'CONDITIONALLY_READY':
         return (
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-breathe" />
             <span>Conditionally Ready</span>
           </div>
         );
       default:
         return (
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold">
-            <span className="w-2 h-2 rounded-full bg-rose-400" />
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-rose-400 animate-breathe" />
             <span>Blocked from AI Orders</span>
           </div>
         );
@@ -537,36 +537,54 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          {/* iOS-Style Native Segmented Control */}
-          <div className="w-full sm:w-auto sm:min-w-[320px] grid grid-cols-2 p-1 bg-[#181A20] border border-white/[0.08] rounded-2xl shadow-lg shadow-black/20">
+          {/* iOS-Style Native Segmented Control with Framer Motion Sliding Pill */}
+          <div className="w-full sm:w-auto sm:min-w-[320px] grid grid-cols-2 p-1 bg-[#181A20] border border-white/[0.08] rounded-2xl shadow-lg shadow-black/20 relative">
             <button
               type="button"
               onClick={() => setViewMode('merchant')}
-              className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`relative py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.97] tactile-btn ${
                 viewMode === 'merchant'
-                  ? 'bg-amber-500/15 text-amber-300 shadow-sm border border-amber-500/30'
+                  ? 'text-amber-300'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-              <span>Merchant View</span>
-              {unresolvedIssues.length > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono">
-                  {unresolvedIssues.length}
-                </span>
+              {viewMode === 'merchant' && (
+                <motion.div
+                  layoutId="activeDashboardViewTab"
+                  className="absolute inset-0 bg-amber-500/15 border border-amber-500/30 rounded-xl shadow-sm"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
               )}
+              <span className="relative z-10 flex items-center gap-2">
+                <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+                <span>Merchant View</span>
+                {unresolvedIssues.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono">
+                    {unresolvedIssues.length}
+                  </span>
+                )}
+              </span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode('inspector')}
-              className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                viewMode !== 'merchant'
-                  ? 'bg-stone-700/40 text-stone-200 shadow-sm border border-white/[0.1]'
+              className={`relative py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.97] tactile-btn ${
+                viewMode === 'inspector'
+                  ? 'text-stone-200'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              <Binary className="w-3.5 h-3.5 shrink-0" />
-              <span>Inspector (Judges)</span>
+              {viewMode === 'inspector' && (
+                <motion.div
+                  layoutId="activeDashboardViewTab"
+                  className="absolute inset-0 bg-stone-700/40 border border-white/[0.1] rounded-xl shadow-sm"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-2">
+                <Binary className="w-3.5 h-3.5 shrink-0" />
+                <span>Inspector (Judges)</span>
+              </span>
             </button>
           </div>
         </div>

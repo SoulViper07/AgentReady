@@ -24,3 +24,86 @@ body {
   color: #F8F9FA;
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Tactile Press & Hover Micro-States */
+  .tactile-btn {
+    transition: all 100ms ease-out;
+  }
+  .tactile-btn:active {
+    transform: scale(0.97);
+  }
+  .tactile-btn:hover {
+    filter: brightness(1.05);
+  }
+}
+
+/* Precision Micro-Shake for Invariant / Gate Blocks */
+@keyframes micro-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(6px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-1px); }
+  90% { transform: translateX(1px); }
+}
+
+.animate-shake {
+  animation: micro-shake 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Emerald Ripple Flash for Confirmation & Success */
+@keyframes emerald-ripple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.25);
+    border-color: rgba(16, 185, 129, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0), 0 0 0 transparent;
+  }
+}
+
+.animate-emerald-ripple {
+  animation: emerald-ripple 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Rose / Warning Flash */
+@keyframes rose-flash {
+  0% {
+    border-color: rgba(244, 63, 94, 0.6);
+    background-color: rgba(244, 63, 94, 0.08);
+  }
+  100% {
+    border-color: rgba(244, 63, 94, 0.2);
+    background-color: transparent;
+  }
+}
+
+.animate-rose-flash {
+  animation: rose-flash 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Slow Rhythmic Breathe for Live Status Indicators */
+@keyframes rhythmic-breathe {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+}
+
+.animate-breathe {
+  animation: rhythmic-breathe 3s ease-in-out infinite;
+}

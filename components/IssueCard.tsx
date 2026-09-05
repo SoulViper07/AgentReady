@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { AuthorityTag } from './AuthorityTag';
 import { TiltCard } from './ui/TiltCard';
+import { motion } from 'framer-motion';
 
 export interface IssueCardProps {
   issue: {
@@ -221,11 +222,16 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   if (issue.resolved || justResolved) {
     return (
       <TiltCard className="rounded-2xl">
-        <div className="rounded-2xl bg-[#181A20]/90 border border-emerald-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl shadow-black/20 transition-all animate-in fade-in duration-500">
+        <div className={`rounded-2xl bg-[#181A20]/90 border border-emerald-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl shadow-black/20 transition-all animate-in fade-in duration-500 ${justResolved ? 'animate-emerald-ripple' : ''}`}>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
+            <motion.div
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: [0.7, 1.15, 1], opacity: 1 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0"
+            >
               <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-            </div>
+            </motion.div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] uppercase font-mono font-bold text-emerald-400">
