@@ -23,6 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
+  UploadCloud,
 } from 'lucide-react';
 import { IssueCard } from '../../components/IssueCard';
 import { AuditFeed } from '../../components/AuditFeed';
@@ -58,6 +59,7 @@ interface InvariantResult {
 interface ProductItem {
   id: string;
   name: string;
+  description?: string | null;
   price: number | null;
   currency: string;
   priceVerified: boolean;
@@ -179,6 +181,7 @@ export default function DashboardPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'merchant' | 'inspector'>('merchant');
   const [showAuditDrawer, setShowAuditDrawer] = useState(false);
+  const [quickVerifying, setQuickVerifying] = useState(false);
 
   const [merchant, setMerchant] = useState<MerchantData | null>(null);
   const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdown | null>(
@@ -293,6 +296,86 @@ export default function DashboardPage() {
     }
   };
 
+  const handleQuickVerifyAll = async () => {
+    setQuickVerifying(true);
+    setStatusMessage(null);
+    try {
+      // 1. Fetch current live merchant state, products, and issues
+      const readRes = await fetch(
+        `/api/readiness?slug=${merchant?.slug || 'sweet-crumbs'}`
+      );
+      const readData = await readRes.json();
+
+      // 2. Authorise and verify each product
+      for (const p of readData.products || []) {
+        await fetch('/api/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'VERIFY_PRODUCT',
+            productId: p.id,
+            price: p.price ?? 220,
+            inventory: p.inventory ?? 10,
+            merchantSlug: merchant?.slug || 'sweet-crumbs',
+          }),
+        });
+      }
+
+      // 3. Approve refund policy
+      const policyIssue = readData.issues?.find(
+        (i: { category: string; resolved: boolean }) =>
+          i.category === 'POLICY' && !i.resolved
+      );
+      await fetch('/api/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'APPROVE_POLICY',
+          merchantSlug: merchant?.slug || 'sweet-crumbs',
+          policyId: readData.policies?.[0]?.id,
+          type: 'REFUND',
+          content:
+            'Due to the fresh, perishable nature of our artisan baked goods, all sales are final upon dispatch. If an item arrives damaged, notify us within 2 hours with photos for a full replacement or refund.',
+        }),
+      });
+
+      // 4. Resolve price consistency conflict with authoritative 250
+      const conflictIssue = readData.issues?.find(
+        (i: { category: string; title?: string; resolved: boolean }) =>
+          (i.category === 'CONSISTENCY' ||
+            i.title?.toLowerCase().includes('conflict')) &&
+          !i.resolved
+      );
+      const signatureProduct = readData.products?.find(
+        (p: { name?: string }) => p.name?.toLowerCase().includes('signature')
+      );
+
+      await fetch('/api/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'RESOLVE_CONFLICT',
+          issueId: conflictIssue?.id,
+          productId: signatureProduct?.id,
+          authoritativePrice: 250,
+          merchantSlug: merchant?.slug || 'sweet-crumbs',
+        }),
+      });
+
+      await fetchReadiness();
+      setStatusMessage(
+        'All catalog items, policies, and prices verified successfully!'
+      );
+      setTimeout(() => setStatusMessage(null), 4000);
+    } catch (err: unknown) {
+      console.error('Quick verify error:', err);
+      const msg = err instanceof Error ? err.message : 'Quick verify failed';
+      setStatusMessage(msg);
+    } finally {
+      setQuickVerifying(false);
+    }
+  };
+
   const unresolvedIssues = issues.filter((i) => !i.resolved);
   const criticalIssues = unresolvedIssues.filter(
     (i) => i.severity === 'CRITICAL'
@@ -334,9 +417,9 @@ export default function DashboardPage() {
 
   if (loading && !merchant) {
     return (
-      <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex items-center justify-center font-sans">
-        <div className="flex items-center gap-3 text-slate-400">
-          <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+      <div className="min-h-screen bg-[#0E0F12] text-stone-100 flex items-center justify-center font-sans">
+        <div className="flex items-center gap-3 text-stone-400">
+          <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
           <span>Loading Merchant Readiness Engine...</span>
         </div>
       </div>
@@ -344,7 +427,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-slate-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className="min-h-screen bg-[#0E0F12] text-stone-100 font-sans selection:bg-amber-500/30 selection:text-amber-200">
       {/* Top Navbar */}
       <Navbar
         merchantStatus={merchant?.transactionStatus}
@@ -357,37 +440,45 @@ export default function DashboardPage() {
       {/* Main Responsive Container */}
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 flex flex-col gap-6 sm:gap-8">
         {/* Top Hero & Readiness Header */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-slate-900/90 to-[#111827] border border-slate-800 p-5 sm:p-7 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#181A20] via-[#141519] to-[#0E0F12] border border-white/[0.08] p-5 sm:p-7 shadow-2xl shadow-black/30 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <Spotlight status={merchant?.transactionStatus || 'NOT_READY'} />
 
           {/* Brand & Store Info */}
           <div className="relative z-10 flex items-start gap-4 sm:gap-5">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-cyan-500/10 to-slate-800 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-inner">
-              <Store className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-400" />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 via-stone-800 to-[#181A20] border border-amber-500/30 flex items-center justify-center shrink-0 shadow-inner">
+              <Store className="w-6 h-6 sm:w-8 sm:h-8 text-amber-300" />
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-amber-100 via-stone-100 to-stone-400 bg-clip-text text-transparent">
                   {merchant?.name || 'Sweet Crumbs'}
                 </h1>
                 {getStatusBadge(merchant?.transactionStatus)}
               </div>
-              {/* Clean, wrap-friendly horizontal metadata strip with micro-icons and slate-400 typography */}
-              <div className="flex items-center gap-x-4 gap-y-1.5 text-xs text-slate-400 flex-wrap">
+              {/* Clean, wrap-friendly horizontal metadata strip with micro-icons and stone-400 typography */}
+              <div className="flex items-center gap-x-4 gap-y-1.5 text-xs text-stone-400 flex-wrap">
                 <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0" />
                   <span>{merchant?.location || 'Chandannagar & Chuchura'}</span>
                 </span>
-                <span className="hidden xs:inline text-slate-700">•</span>
+                <span className="hidden xs:inline text-stone-700">•</span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <Phone className="w-3.5 h-3.5 text-stone-400 shrink-0" />
                   <span>{merchant?.contactPhone || '+91 8697774043'}</span>
                 </span>
-                <span className="hidden xs:inline text-slate-700">•</span>
+                <span className="hidden xs:inline text-stone-700">•</span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <Layers className="w-3.5 h-3.5 text-stone-400 shrink-0" />
                   <span>{products.length} Products Cataloged</span>
                 </span>
+                <span className="hidden xs:inline text-stone-700">•</span>
+                <Link
+                  href="/ingest"
+                  className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 font-semibold cursor-pointer"
+                >
+                  <UploadCloud className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>Ingest Studio</span>
+                </Link>
               </div>
             </div>
           </div>
@@ -405,10 +496,10 @@ export default function DashboardPage() {
               <div className="relative z-10 flex items-center gap-4 sm:gap-5 bg-gradient-to-b from-white/[0.05] to-transparent border border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-inner">
                 <ReadinessRing score={merchant?.readinessScore || 0} />
                 <div className="flex flex-col gap-1 max-w-xs">
-                  <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">
+                  <span className="text-[11px] uppercase tracking-wider font-semibold text-stone-400">
                     AI Commerce Readiness
                   </span>
-                  <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                  <p className="text-xs text-stone-300 leading-relaxed font-medium">
                     {isZeroState
                       ? 'Readiness Inactive: Awaiting data ingestion or verification'
                       : unresolvedIssues.length > 0
@@ -417,12 +508,12 @@ export default function DashboardPage() {
                         } below to unlock autonomous orders via Razorpay.`
                       : 'All catalog items & policies verified. Live and discoverable by autonomous AI buyers.'}
                   </p>
-                  <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400 font-mono">
+                  <div className="mt-1 flex items-center gap-2 text-[11px] text-stone-400 font-mono">
                     <span
                       className={`w-2 h-2 rounded-full ${
                         verifiedProductsCount > 0
                           ? 'bg-emerald-400'
-                          : 'bg-slate-600'
+                          : 'bg-stone-600'
                       }`}
                     />
                     <span>
@@ -437,9 +528,9 @@ export default function DashboardPage() {
 
         {/* Dual-View Mode Switcher Banner (iOS Segmented Pill Control) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="font-semibold text-slate-200">Active View:</span>
-            <span className="text-slate-400 hidden xs:inline">
+          <div className="flex items-center gap-2 text-xs text-stone-400">
+            <span className="font-semibold text-stone-200">Active View:</span>
+            <span className="text-stone-400 hidden xs:inline">
               {viewMode === 'merchant'
                 ? 'Human-centric commerce feed • Zero code syntax'
                 : 'Judges instrumentation • Zod provenance, AST invariants & audit ledger'}
@@ -447,14 +538,14 @@ export default function DashboardPage() {
           </div>
 
           {/* iOS-Style Native Segmented Control */}
-          <div className="w-full sm:w-auto sm:min-w-[320px] grid grid-cols-2 p-1 bg-slate-900/90 border border-white/[0.08] rounded-2xl shadow-lg">
+          <div className="w-full sm:w-auto sm:min-w-[320px] grid grid-cols-2 p-1 bg-[#181A20] border border-white/[0.08] rounded-2xl shadow-lg shadow-black/20">
             <button
               type="button"
               onClick={() => setViewMode('merchant')}
               className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 viewMode === 'merchant'
-                  ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-amber-500/15 text-amber-300 shadow-sm border border-amber-500/30'
+                  : 'text-stone-400 hover:text-stone-200'
               }`}
             >
               <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
@@ -470,8 +561,8 @@ export default function DashboardPage() {
               onClick={() => setViewMode('inspector')}
               className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 viewMode !== 'merchant'
-                  ? 'bg-purple-500/20 text-purple-300 shadow-sm border border-purple-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-stone-700/40 text-stone-200 shadow-sm border border-white/[0.1]'
+                  : 'text-stone-400 hover:text-stone-200'
               }`}
             >
               <Binary className="w-3.5 h-3.5 shrink-0" />
@@ -488,33 +579,50 @@ export default function DashboardPage() {
             {/* Left / Main Column: Action Required Feed (7 or 8 Cols) */}
             <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-5">
               {/* Section Header */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2.5">
+                  <h2 className="text-lg font-bold text-[#F8F9FA] flex items-center gap-2.5">
                     <ShoppingBag className="w-5 h-5 text-emerald-400" />
                     Resolve to Sell
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-stone-400 mt-0.5">
                     Authorise catalog ground truth to permit autonomous AI buyers
                     to place instant verified orders.
                   </p>
                 </div>
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-300">
-                  {unresolvedIssues.length} Action Items
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {unresolvedIssues.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleQuickVerifyAll}
+                      disabled={quickVerifying}
+                      className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950/40 border border-emerald-500/30 transition-all cursor-pointer"
+                    >
+                      {quickVerifying ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-200" />
+                      )}
+                      <span>Quick Verify All (Demo)</span>
+                    </button>
+                  )}
+                  <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#181A20] border border-white/[0.08] text-stone-300">
+                    {unresolvedIssues.length} Action Items
+                  </span>
+                </div>
               </div>
 
               {/* Celebration Card when All Resolved */}
               {unresolvedIssues.length === 0 ? (
-                <div className="rounded-3xl bg-gradient-to-b from-[#111827] to-slate-900 border border-emerald-500/30 p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-4 shadow-2xl">
+                <div className="rounded-3xl bg-gradient-to-b from-[#181A20] to-[#121316] border border-emerald-500/30 p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-4 shadow-xl shadow-black/20">
                   <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">
+                    <h3 className="text-lg font-bold text-[#F8F9FA]">
                       All Catalog Items &amp; Policies Verified!
                     </h3>
-                    <p className="text-xs sm:text-sm text-slate-400 max-w-md mt-1 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-stone-400 max-w-md mt-1 leading-relaxed">
                       Your store has passed all deterministic readiness gates.
                       Autonomous AI buyers can now discover your products and
                       execute instant orders via Razorpay.
@@ -547,75 +655,111 @@ export default function DashboardPage() {
 
             {/* Right / Secondary Column: Live Catalog Snapshot & Logistics (5 or 4 Cols) */}
             <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
-              {/* Live Catalog Snapshot Card */}
-              <div className="rounded-2xl bg-[#111827] border border-slate-800 p-5 sm:p-6 shadow-xl flex flex-col gap-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
-                  <div className="flex items-center gap-2">
-                    <Store className="w-4 h-4 text-emerald-400" />
-                    <h3 className="text-sm font-semibold text-white">
-                      Live Catalog Snapshot
-                    </h3>
+              {/* Live Catalog Snapshot Card (Stripe / Shopify Commerce Polish) */}
+              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
+                <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <Store className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-[#F8F9FA]">
+                        Live Catalog Snapshot
+                      </h3>
+                      <p className="text-[11px] text-stone-400">
+                        {products.length} cataloged product{products.length === 1 ? '' : 's'}
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                    {products.length} Products
-                  </span>
+                  <Link
+                    href="/ingest"
+                    className="min-h-[30px] px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    <span>+ Ingest Studio</span>
+                  </Link>
                 </div>
 
-                <div className="flex flex-col divide-y divide-slate-800/60">
+                <div className="flex flex-col gap-3">
                   {products.map((p) => {
                     const isVerified = p.priceVerified && p.inventoryVerified;
                     return (
                       <div
                         key={p.id}
-                        className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3"
+                        className="p-3.5 rounded-xl bg-[#121316] border border-white/[0.06] hover:border-stone-700/80 transition-all flex flex-col gap-2.5"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 text-sm">
-                            🍪
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#181A20] to-[#141519] border border-white/[0.08] flex items-center justify-center shrink-0 text-base shadow-inner">
+                              {p.name.toLowerCase().includes('choco') || p.name.toLowerCase().includes('cookie')
+                                ? '🍪'
+                                : p.name.toLowerCase().includes('croissant')
+                                ? '🥐'
+                                : p.name.toLowerCase().includes('sourdough') || p.name.toLowerCase().includes('bread')
+                                ? '🥖'
+                                : p.name.toLowerCase().includes('brew') || p.name.toLowerCase().includes('latte') || p.name.toLowerCase().includes('coffee')
+                                ? '☕'
+                                : '✨'}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="text-xs font-bold text-[#F8F9FA] tracking-tight">
+                                  {p.name}
+                                </h4>
+                                {p.isEggless && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                                    Eggless
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-stone-400 mt-0.5 line-clamp-1">
+                                {p.description || 'Artisan baked specialty'}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold text-white">
-                                {p.name}
+
+                          <div className="shrink-0">
+                            {isVerified ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-semibold">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Verified
                               </span>
-                              {p.isEggless && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-                                  Eggless
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-0.5 font-mono">
-                              <span>
-                                {p.price !== null ? (
-                                  `₹${p.price}`
-                                ) : (
-                                  <span className="text-amber-400">Needs Price</span>
-                                )}
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 font-semibold">
+                                <AlertTriangle className="w-3 h-3" />
+                                Pending
                               </span>
-                              <span>•</span>
-                              <span>
-                                {p.inventory !== null ? (
-                                  `${p.inventory} in stock`
-                                ) : (
-                                  <span className="text-amber-400">Needs Stock</span>
-                                )}
-                              </span>
-                            </div>
+                            )}
                           </div>
                         </div>
 
-                        <div>
-                          {isVerified ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-medium">
-                              <CheckCircle2 className="w-3 h-3" />
-                              Verified
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 font-medium">
-                              <AlertTriangle className="w-3 h-3" />
-                              Pending
-                            </span>
-                          )}
+                        {/* Commerce Metrics Strip: Price Badge & Stock Counter */}
+                        <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-stone-500 text-[11px]">Price:</span>
+                            {p.price !== null ? (
+                              <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                                ₹{p.price}
+                              </span>
+                            ) : (
+                              <span className="text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20 text-[11px] font-semibold">
+                                Unstated (Null)
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-stone-500 text-[11px]">Inventory:</span>
+                            {p.inventory !== null ? (
+                              <span className="font-semibold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                                {p.inventory} in stock
+                              </span>
+                            ) : (
+                              <span className="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 text-[11px] font-semibold">
+                                Unverified Stock
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -624,36 +768,36 @@ export default function DashboardPage() {
               </div>
 
               {/* Logistics & Operations Card */}
-              <div className="rounded-2xl bg-[#111827] border border-slate-800 p-5 sm:p-6 shadow-xl flex flex-col gap-4">
-                <div className="flex items-center gap-2 pb-3 border-b border-slate-800/80">
-                  <Truck className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-sm font-semibold text-white">
+              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-white/[0.08]">
+                  <Truck className="w-4 h-4 text-amber-400" />
+                  <h3 className="text-sm font-semibold text-[#F8F9FA]">
                     Logistics &amp; Fulfillment
                   </h3>
                 </div>
 
                 <div className="grid grid-cols-1 gap-2.5 text-xs">
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                    <span className="text-slate-400">Delivery Territory</span>
-                    <span className="text-white font-medium">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#121316] border border-white/[0.06]">
+                    <span className="text-stone-400">Delivery Territory</span>
+                    <span className="text-[#F8F9FA] font-medium">
                       Chandannagar &amp; Chuchura
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                    <span className="text-slate-400">Merchant Contact</span>
-                    <span className="text-white font-medium">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#121316] border border-white/[0.06]">
+                    <span className="text-stone-400">Merchant Contact</span>
+                    <span className="text-[#F8F9FA] font-medium">
                       +91 8697774043
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                    <span className="text-slate-400">Payment Gateway</span>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#121316] border border-white/[0.06]">
+                    <span className="text-stone-400">Payment Gateway</span>
                     <span className="text-emerald-400 font-medium">
                       Razorpay UPI &amp; Cards (Active)
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                    <span className="text-slate-400">Cart Reservation</span>
-                    <span className="text-cyan-400 font-medium">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#121316] border border-white/[0.06]">
+                    <span className="text-stone-400">Cart Reservation</span>
+                    <span className="text-amber-300 font-medium">
                       10-Minute Inventory Hold
                     </span>
                   </div>
@@ -661,12 +805,12 @@ export default function DashboardPage() {
               </div>
 
               {/* AI Buyer Simulator CTA */}
-              <div className="rounded-2xl bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-950 border border-emerald-500/30 p-5 sm:p-6 shadow-xl flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
-                  <Sparkles className="w-4 h-4" />
+              <div className="rounded-2xl bg-gradient-to-br from-[#181A20] via-[#141519] to-[#0E0F12] border border-amber-500/25 p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-3">
+                <div className="flex items-center gap-2 text-amber-300 font-semibold text-sm">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
                   <span>Test Store with AI Buyers</span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-stone-300 leading-relaxed">
                   Experience how autonomous LLM agents discover your verified
                   products, parse dietary preferences, and propose orders.
                 </p>
@@ -684,15 +828,15 @@ export default function DashboardPage() {
 
         {/* Collapsible Immutable Audit Ledger in Merchant View */}
         {viewMode === 'merchant' && (
-          <div className="rounded-2xl bg-[#111827] border border-slate-800 p-5 sm:p-6 shadow-xl flex flex-col gap-4">
+          <div id="audit-ledger" className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2.5">
-                <History className="w-4 h-4 text-slate-400" />
+                <History className="w-4 h-4 text-stone-400" />
                 <div>
-                  <h3 className="text-sm font-semibold text-white">
+                  <h3 className="text-sm font-semibold text-[#F8F9FA]">
                     Immutable System Audit Ledger
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-stone-400">
                     Cryptographic ledger recording all verification, score
                     evaluations, and Razorpay transactions.
                   </p>
@@ -701,7 +845,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setShowAuditDrawer(!showAuditDrawer)}
-                className="min-h-[40px] px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold flex items-center gap-2 border border-slate-700 transition-colors cursor-pointer"
+                className="min-h-[40px] px-4 py-2 rounded-xl bg-[#121316] hover:bg-[#141519] text-stone-200 text-xs font-semibold flex items-center gap-2 border border-white/[0.08] transition-colors cursor-pointer"
               >
                 <span>
                   {showAuditDrawer ? 'Hide Audit Ledger' : 'View Audit Ledger'}
@@ -742,13 +886,13 @@ export default function DashboardPage() {
             {/* Technical Readiness Overview Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Score Card: 4 Cols */}
-              <div className="lg:col-span-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 p-6 flex flex-col justify-between shadow-xl">
+              <div className="lg:col-span-4 rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-6 flex flex-col justify-between shadow-xl shadow-black/20">
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-stone-400">
                       Readiness Index
                     </span>
-                    <span className="text-xs font-mono text-zinc-400">
+                    <span className="text-xs font-mono text-stone-400">
                       Deterministic v1.0
                     </span>
                   </div>
@@ -761,12 +905,12 @@ export default function DashboardPage() {
                     >
                       {merchant?.readinessScore || 0}
                     </span>
-                    <span className="text-2xl font-medium text-zinc-400">
+                    <span className="text-2xl font-medium text-stone-400">
                       / 100
                     </span>
                   </div>
 
-                  <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
+                  <p className="text-xs text-stone-400 mt-2 leading-relaxed">
                     {merchant?.transactionStatus === 'READY'
                       ? 'Autonomous AI buyers are unlocked to place instant, verified cart transactions.'
                       : merchant?.transactionStatus === 'CONDITIONALLY_READY'
@@ -776,9 +920,9 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Invariant Hard Gates */}
-                <div className="mt-6 pt-5 border-t border-zinc-800/80 flex flex-col gap-2.5">
+                <div className="mt-6 pt-5 border-t border-white/[0.08] flex flex-col gap-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-stone-400">
                       Invariant Hard Gates
                     </span>
                     <AuthorityTag
@@ -789,9 +933,9 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex flex-col gap-2 text-xs">
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/60 border border-zinc-800">
-                      <span className="flex items-center gap-2 text-zinc-300">
-                        <Lock className="w-3.5 h-3.5 text-zinc-400" />
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-[#121316] border border-white/[0.06]">
+                      <span className="flex items-center gap-2 text-stone-300">
+                        <Lock className="w-3.5 h-3.5 text-stone-400" />
                         Verified Price (&gt; 0)
                       </span>
                       {products.some(
@@ -803,9 +947,9 @@ export default function DashboardPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/60 border border-zinc-800">
-                      <span className="flex items-center gap-2 text-zinc-300">
-                        <Lock className="w-3.5 h-3.5 text-zinc-400" />
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-[#121316] border border-white/[0.06]">
+                      <span className="flex items-center gap-2 text-stone-300">
+                        <Lock className="w-3.5 h-3.5 text-stone-400" />
                         Verified Inventory (&gt; 0)
                       </span>
                       {products.some(
@@ -818,9 +962,9 @@ export default function DashboardPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/60 border border-zinc-800">
-                      <span className="flex items-center gap-2 text-zinc-300">
-                        <FileCheck2 className="w-3.5 h-3.5 text-zinc-400" />
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-[#121316] border border-white/[0.06]">
+                      <span className="flex items-center gap-2 text-stone-300">
+                        <FileCheck2 className="w-3.5 h-3.5 text-stone-400" />
                         Verified Policy
                       </span>
                       {policies.some((p) => p.isVerified) ? (
@@ -830,9 +974,9 @@ export default function DashboardPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/60 border border-zinc-800">
-                      <span className="flex items-center gap-2 text-zinc-300">
-                        <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-[#121316] border border-white/[0.06]">
+                      <span className="flex items-center gap-2 text-stone-300">
+                        <ShieldCheck className="w-3.5 h-3.5 text-stone-400" />
                         Zero Critical Issues
                       </span>
                       {criticalIssues.length === 0 ? (
@@ -864,14 +1008,14 @@ export default function DashboardPage() {
               </div>
 
               {/* Category Breakdown Bars: 8 Cols */}
-              <div className="lg:col-span-8 rounded-2xl bg-zinc-900/90 border border-zinc-800 p-6 shadow-xl flex flex-col justify-between">
+              <div className="lg:col-span-8 rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-6 shadow-xl shadow-black/20 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                     <div>
-                      <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-stone-400">
                         Deterministic Score Model Breakdown
                       </h3>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">
+                      <p className="text-[11px] text-stone-400 mt-0.5">
                         100-point index calculated across 5 strict categories (20 pts
                         max each)
                       </p>
@@ -886,9 +1030,9 @@ export default function DashboardPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     {/* 1. Product Data */}
-                    <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 flex flex-col gap-2">
+                    <div className="p-4 rounded-xl bg-[#121316] border border-white/[0.06] flex flex-col gap-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-300 font-medium">
+                        <span className="text-stone-300 font-medium">
                           Product Data
                         </span>
                         <AuthorityTag
@@ -898,22 +1042,22 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="flex items-baseline justify-between text-xs">
-                        <span className="text-[11px] text-zinc-400 font-mono">
+                        <span className="text-[11px] text-stone-400 font-mono">
                           Weight (20%)
                         </span>
-                        <span className="font-mono font-bold text-zinc-100">
+                        <span className="font-mono font-bold text-stone-100">
                           {scoreBreakdown?.productData || 0} / 20
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-[#181A20] overflow-hidden">
                         <div
-                          className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                          className="h-full bg-amber-500 rounded-full transition-all duration-500"
                           style={{
                             width: `${((scoreBreakdown?.productData || 0) / 20) * 100}%`,
                           }}
                         />
                       </div>
-                      <span className="text-[11px] text-zinc-400">
+                      <span className="text-[11px] text-stone-400">
                         {scoreBreakdown?.productData === 20
                           ? 'All catalog items fully structured.'
                           : 'Items missing title, description or dietary flags.'}
@@ -921,9 +1065,9 @@ export default function DashboardPage() {
                     </div>
 
                     {/* 2. Price Reliability */}
-                    <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 flex flex-col gap-2">
+                    <div className="p-4 rounded-xl bg-[#121316] border border-white/[0.06] flex flex-col gap-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-300 font-medium">
+                        <span className="text-stone-300 font-medium">
                           Price Reliability
                         </span>
                         <AuthorityTag
@@ -933,14 +1077,14 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="flex items-baseline justify-between text-xs">
-                        <span className="text-[11px] text-zinc-400 font-mono">
+                        <span className="text-[11px] text-stone-400 font-mono">
                           Weight (20%)
                         </span>
-                        <span className="font-mono font-bold text-zinc-100">
+                        <span className="font-mono font-bold text-stone-100">
                           {scoreBreakdown?.priceReliability || 0} / 20
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-[#181A20] overflow-hidden">
                         <div
                           className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                           style={{
@@ -950,7 +1094,7 @@ export default function DashboardPage() {
                           }}
                         />
                       </div>
-                      <span className="text-[11px] text-zinc-400">
+                      <span className="text-[11px] text-stone-400">
                         {scoreBreakdown?.priceReliability === 20
                           ? '100% prices verified ground truth.'
                           : 'Contains unverified or conflicting pricing.'}
@@ -958,9 +1102,9 @@ export default function DashboardPage() {
                     </div>
 
                     {/* 3. Inventory Confidence */}
-                    <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 flex flex-col gap-2">
+                    <div className="p-4 rounded-xl bg-[#121316] border border-white/[0.06] flex flex-col gap-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-300 font-medium">
+                        <span className="text-stone-300 font-medium">
                           Inventory Confidence
                         </span>
                         <AuthorityTag
@@ -970,16 +1114,16 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="flex items-baseline justify-between text-xs">
-                        <span className="text-[11px] text-zinc-400 font-mono">
+                        <span className="text-[11px] text-stone-400 font-mono">
                           Weight (20%)
                         </span>
-                        <span className="font-mono font-bold text-zinc-100">
+                        <span className="font-mono font-bold text-stone-100">
                           {scoreBreakdown?.inventoryConfidence || 0} / 20
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-[#181A20] overflow-hidden">
                         <div
-                          className="h-full bg-cyan-500 rounded-full transition-all duration-500"
+                          className="h-full bg-amber-400 rounded-full transition-all duration-500"
                           style={{
                             width: `${
                               ((scoreBreakdown?.inventoryConfidence || 0) / 20) *
@@ -988,7 +1132,7 @@ export default function DashboardPage() {
                           }}
                         />
                       </div>
-                      <span className="text-[11px] text-zinc-400">
+                      <span className="text-[11px] text-stone-400">
                         {scoreBreakdown?.inventoryConfidence === 20
                           ? 'All products have confirmed positive stock.'
                           : 'Missing explicit stock counts.'}
@@ -996,9 +1140,9 @@ export default function DashboardPage() {
                     </div>
 
                     {/* 4. Policy Readiness */}
-                    <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 flex flex-col gap-2">
+                    <div className="p-4 rounded-xl bg-[#121316] border border-white/[0.06] flex flex-col gap-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-300 font-medium">
+                        <span className="text-stone-300 font-medium">
                           Policy Readiness
                         </span>
                         <AuthorityTag
@@ -1008,16 +1152,16 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="flex items-baseline justify-between text-xs">
-                        <span className="text-[11px] text-zinc-400 font-mono">
+                        <span className="text-[11px] text-stone-400 font-mono">
                           Weight (20%)
                         </span>
-                        <span className="font-mono font-bold text-zinc-100">
+                        <span className="font-mono font-bold text-stone-100">
                           {scoreBreakdown?.policyReadiness || 0} / 20
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-[#181A20] overflow-hidden">
                         <div
-                          className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                          className="h-full bg-stone-400 rounded-full transition-all duration-500"
                           style={{
                             width: `${
                               ((scoreBreakdown?.policyReadiness || 0) / 20) * 100
@@ -1025,15 +1169,15 @@ export default function DashboardPage() {
                           }}
                         />
                       </div>
-                      <span className="text-[11px] text-zinc-400">
+                      <span className="text-[11px] text-stone-400">
                         Verified refund terms (10 pts) + delivery coverage (10 pts)
                       </span>
                     </div>
 
                     {/* 5. Data Consistency */}
-                    <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 flex flex-col gap-2 sm:col-span-2">
+                    <div className="p-4 rounded-xl bg-[#121316] border border-white/[0.06] flex flex-col gap-2 sm:col-span-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-300 font-medium">
+                        <span className="text-stone-300 font-medium">
                           Data Consistency
                         </span>
                         <AuthorityTag
@@ -1043,14 +1187,14 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="flex items-baseline justify-between text-xs">
-                        <span className="text-[11px] text-zinc-400 font-mono">
+                        <span className="text-[11px] text-stone-400 font-mono">
                           Weight (20%)
                         </span>
-                        <span className="font-mono font-bold text-zinc-100">
+                        <span className="font-mono font-bold text-stone-100">
                           {scoreBreakdown?.dataConsistency || 0} / 20
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-[#181A20] overflow-hidden">
                         <div
                           className="h-full bg-amber-500 rounded-full transition-all duration-500"
                           style={{
@@ -1060,7 +1204,7 @@ export default function DashboardPage() {
                           }}
                         />
                       </div>
-                      <span className="text-[11px] text-zinc-400">
+                      <span className="text-[11px] text-stone-400">
                         Starts at 20; -10 deduction per unresolved consistency
                         discrepancy
                       </span>
@@ -1071,14 +1215,14 @@ export default function DashboardPage() {
             </div>
 
             {/* Operational Policies Quick Verification Bar */}
-            <section className="rounded-2xl bg-zinc-900/60 border border-zinc-800 p-6 flex flex-col gap-4">
+            <section className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-6 flex flex-col gap-4 shadow-xl shadow-black/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-semibold text-white flex items-center gap-2">
-                    <FileCheck2 className="w-5 h-5 text-purple-400" />
+                  <h2 className="text-base font-semibold text-[#F8F9FA] flex items-center gap-2">
+                    <FileCheck2 className="w-5 h-5 text-amber-400" />
                     Operational Policies &amp; Legal Disclaimers
                   </h2>
-                  <p className="text-xs text-zinc-400 mt-0.5">
+                  <p className="text-xs text-stone-400 mt-0.5">
                     AI buyers require verified refund and delivery terms to
                     execute automated transactions.
                   </p>
@@ -1089,10 +1233,10 @@ export default function DashboardPage() {
                 {policies.map((pol) => (
                   <div
                     key={pol.id}
-                    className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800 flex flex-col justify-between gap-3"
+                    className="p-4 rounded-xl bg-[#121316] border border-white/[0.06] flex flex-col justify-between gap-3"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#181A20] text-stone-300 border border-white/[0.06]">
                         {pol.type} Policy
                       </span>
                       {pol.isVerified ? (
@@ -1108,12 +1252,12 @@ export default function DashboardPage() {
                       )}
                     </div>
 
-                    <p className="text-xs text-zinc-300 leading-relaxed italic">
+                    <p className="text-xs text-stone-300 leading-relaxed italic">
                       &ldquo;{pol.content}&rdquo;
                     </p>
 
                     {!pol.isVerified && (
-                      <div className="flex justify-end pt-2 border-t border-zinc-800/80">
+                      <div className="flex justify-end pt-2 border-t border-white/[0.06]">
                         <button
                           onClick={() =>
                             handleResolveAction({
@@ -1125,7 +1269,7 @@ export default function DashboardPage() {
                             })
                           }
                           disabled={actionLoading}
-                          className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium transition-all shadow-md shadow-purple-950 disabled:opacity-50 cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium transition-all shadow-md shadow-amber-950 disabled:opacity-50 cursor-pointer"
                         >
                           Approve &amp; Verify Policy
                         </button>
@@ -1140,32 +1284,32 @@ export default function DashboardPage() {
             <section className="flex flex-col gap-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2.5">
+                  <h2 className="text-lg font-bold text-[#F8F9FA] flex items-center gap-2.5">
                     <AlertTriangle className="w-5 h-5 text-amber-400" />
                     Actionable Remediation Feed (AST Provenance)
                   </h2>
-                  <p className="text-xs text-zinc-400 mt-0.5">
+                  <p className="text-xs text-stone-400 mt-0.5">
                     Human-in-the-loop verification. Review AI explanations, raw
                     trace lines, and authorize ground truth.
                   </p>
                 </div>
-                <div className="flex items-center gap-2 font-mono text-xs text-zinc-400">
-                  <span className="px-2 py-1 rounded bg-zinc-900 border border-zinc-800">
+                <div className="flex items-center gap-2 font-mono text-xs text-stone-400">
+                  <span className="px-2 py-1 rounded bg-[#121316] border border-white/[0.08]">
                     {unresolvedIssues.length} Pending
                   </span>
-                  <span className="px-2 py-1 rounded bg-zinc-900 border border-zinc-800 text-emerald-400">
+                  <span className="px-2 py-1 rounded bg-[#121316] border border-white/[0.08] text-emerald-400">
                     {issues.length - unresolvedIssues.length} Resolved
                   </span>
                 </div>
               </div>
 
               {unresolvedIssues.length === 0 ? (
-                <div className="rounded-2xl bg-zinc-900/40 border border-emerald-500/20 p-10 flex flex-col items-center justify-center text-center gap-3">
+                <div className="rounded-2xl bg-[#181A20]/90 border border-emerald-500/20 p-10 flex flex-col items-center justify-center text-center gap-3 shadow-xl shadow-black/20">
                   <CheckCircle2 className="w-12 h-12 text-emerald-400" />
-                  <h3 className="text-base font-semibold text-white">
+                  <h3 className="text-base font-semibold text-[#F8F9FA]">
                     All Readiness Issues Resolved!
                   </h3>
-                  <p className="text-xs text-zinc-400 max-w-md">
+                  <p className="text-xs text-stone-400 max-w-md">
                     Catalog data is completely verified, operational policies
                     are active, and zero discrepancies remain.
                   </p>
@@ -1224,8 +1368,8 @@ export default function DashboardPage() {
                   {mediumIssues.length > 0 && (
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-sky-500" />
-                        <span className="text-xs font-bold uppercase tracking-wider text-sky-400 font-mono">
+                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono">
                           Medium Improvements ({mediumIssues.length})
                         </span>
                       </div>
@@ -1248,14 +1392,14 @@ export default function DashboardPage() {
             </section>
 
             {/* Live Catalog Table (Raw Inspector View) */}
-            <section className="rounded-2xl bg-zinc-900/60 border border-zinc-800 p-6 flex flex-col gap-4 shadow-xl">
+            <section className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-6 flex flex-col gap-4 shadow-xl shadow-black/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                  <h2 className="text-base font-semibold text-[#F8F9FA] flex items-center gap-2">
                     <Store className="w-5 h-5 text-emerald-400" />
                     Live Merchant Products Catalog Table
                   </h2>
-                  <p className="text-xs text-zinc-400 mt-0.5">
+                  <p className="text-xs text-stone-400 mt-0.5">
                     Current catalog records reflecting real-time human
                     verification.
                   </p>
@@ -1263,8 +1407,8 @@ export default function DashboardPage() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-zinc-300">
-                  <thead className="bg-zinc-950/80 text-zinc-400 font-mono uppercase tracking-wider border-b border-zinc-800">
+                <table className="w-full text-left text-xs text-stone-300">
+                  <thead className="bg-[#121316] text-stone-400 font-mono uppercase tracking-wider border-b border-white/[0.08]">
                     <tr>
                       <th className="py-3 px-4">Product Name</th>
                       <th className="py-3 px-4">Price</th>
@@ -1275,13 +1419,13 @@ export default function DashboardPage() {
                       <th className="py-3 px-4 text-right">Quick Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800/60">
+                  <tbody className="divide-y divide-white/[0.04]">
                     {products.map((p) => (
                       <tr
                         key={p.id}
-                        className="hover:bg-zinc-800/30 transition-colors"
+                        className="hover:bg-[#141519] transition-colors"
                       >
-                        <td className="py-3 px-4 font-medium text-white">
+                        <td className="py-3 px-4 font-medium text-[#F8F9FA]">
                           {p.name}
                           {p.isEggless && (
                             <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -1302,7 +1446,7 @@ export default function DashboardPage() {
                               <CheckCircle2 className="w-3.5 h-3.5" /> Yes
                             </span>
                           ) : (
-                            <span className="text-zinc-400">No</span>
+                            <span className="text-stone-400">No</span>
                           )}
                         </td>
                         <td className="py-3 px-4 font-mono">
@@ -1318,7 +1462,7 @@ export default function DashboardPage() {
                               <CheckCircle2 className="w-3.5 h-3.5" /> Yes
                             </span>
                           ) : (
-                            <span className="text-zinc-400">No</span>
+                            <span className="text-stone-400">No</span>
                           )}
                         </td>
                         <td className="py-3 px-4 font-mono">
@@ -1326,7 +1470,7 @@ export default function DashboardPage() {
                             className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                               p.status === 'VERIFIED'
                                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                : 'bg-zinc-800 text-zinc-400'
+                                : 'bg-[#181A20] text-stone-400 border border-white/[0.06]'
                             }`}
                           >
                             {p.status}
@@ -1344,12 +1488,12 @@ export default function DashboardPage() {
                                 })
                               }
                               disabled={actionLoading}
-                              className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-emerald-600 hover:text-white text-zinc-300 text-[11px] font-medium transition-all disabled:opacity-50 cursor-pointer"
+                              className="px-2.5 py-1 rounded bg-[#181A20] hover:bg-emerald-600 hover:text-white text-stone-300 text-[11px] font-medium border border-white/[0.08] transition-all disabled:opacity-50 cursor-pointer"
                             >
                               Verify Product
                             </button>
                           ) : (
-                            <span className="text-[11px] text-zinc-400 font-mono">
+                            <span className="text-[11px] text-stone-400 font-mono">
                               Locked
                             </span>
                           )}

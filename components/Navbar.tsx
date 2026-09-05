@@ -13,6 +13,8 @@ import {
   RotateCcw,
   CheckCircle2,
   RefreshCw,
+  UploadCloud,
+  ShieldCheck,
 } from 'lucide-react';
 
 export interface NavbarProps {
@@ -74,10 +76,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0B0F17]/80 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 flex items-center justify-between">
+    <header className="sticky top-0 z-40 bg-[#0E0F12]/90 backdrop-blur-xl border-b border-white/[0.08] px-4 py-3 flex items-center justify-between">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-16 right-4 sm:right-6 z-50 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-900/95 border border-emerald-500/40 text-emerald-300 text-xs font-mono shadow-2xl shadow-emerald-950/50 animate-in fade-in slide-in-from-top-2">
+        <div className="fixed top-16 right-4 sm:right-6 z-50 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#181A20] border border-emerald-500/40 text-emerald-300 text-xs font-mono shadow-2xl shadow-black/40 animate-in fade-in slide-in-from-top-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
@@ -85,19 +87,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       <div className="flex items-center gap-4 sm:gap-6">
         <Link href="/dashboard" className="flex items-center gap-2.5 sm:gap-3">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-black/20 shrink-0">
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm sm:text-base tracking-tight text-white">
+              <span className="font-bold text-sm sm:text-base tracking-tight text-[#F8F9FA]">
                 AgentReady
               </span>
-              <span className="hidden md:inline-block text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800/80 text-zinc-400 border border-white/[0.06]">
+              <span className="hidden md:inline-block text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-white/[0.05] text-stone-400 border border-white/[0.06]">
                 Fintech Orchestration
               </span>
             </div>
-            <p className="hidden sm:inline text-xs text-zinc-400 font-medium">
+            <p className="hidden sm:inline text-xs text-stone-400 font-medium">
               {subtitle ||
                 (pathname === '/agent-demo'
                   ? 'Autonomous Buyer Simulator & Invariant Gate'
@@ -108,52 +110,58 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         <nav className="hidden md:flex items-center gap-1 border-l border-white/[0.08] pl-5">
           <Link
+            href="/ingest"
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${
+              pathname === '/ingest'
+                ? 'bg-[#181A20] text-emerald-400 border border-emerald-500/20'
+                : 'text-stone-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            <UploadCloud
+              className={`w-3.5 h-3.5 ${
+                pathname === '/ingest' ? 'text-emerald-400' : 'text-stone-400'
+              }`}
+            />
+            Store Ingest
+          </Link>
+          <Link
             href="/dashboard"
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${
               pathname === '/dashboard'
-                ? 'bg-zinc-800/80 text-emerald-400 border border-emerald-500/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                ? 'bg-[#181A20] text-emerald-400 border border-emerald-500/20'
+                : 'text-stone-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            <Store
+            <ShieldCheck
               className={`w-3.5 h-3.5 ${
-                pathname === '/dashboard' ? 'text-emerald-400' : 'text-zinc-400'
+                pathname === '/dashboard' ? 'text-emerald-400' : 'text-stone-400'
               }`}
             />
-            Remediation Dashboard
+            Readiness &amp; Verification
           </Link>
           <Link
             href="/agent-demo"
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${
               pathname === '/agent-demo'
-                ? 'bg-zinc-800/80 text-emerald-400 border border-emerald-500/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                ? 'bg-[#181A20] text-emerald-400 border border-emerald-500/20'
+                : 'text-stone-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
             <Bot
               className={`w-3.5 h-3.5 ${
                 pathname === '/agent-demo'
                   ? 'text-emerald-400'
-                  : 'text-zinc-400'
+                  : 'text-stone-400'
               }`}
             />
-            AI Buyer Playground
+            AI Buyer Terminal
           </Link>
           <Link
             href="/dashboard#audit-ledger"
-            className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium text-stone-400 hover:text-white hover:bg-white/[0.04] transition-colors flex items-center gap-2"
           >
-            <History className="w-3.5 h-3.5 text-zinc-400" />
+            <History className="w-3.5 h-3.5 text-stone-400" />
             Audit Ledger
-          </Link>
-          <Link
-            href="/api/catalog"
-            target="_blank"
-            className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors flex items-center gap-1.5"
-          >
-            <Code className="w-3.5 h-3.5 text-zinc-400" />
-            Catalog API
-            <ExternalLink className="w-3 h-3 text-zinc-400" />
           </Link>
         </nav>
       </div>
@@ -190,7 +198,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={handleReset}
           disabled={resetting}
-          className="w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] active:scale-95 text-zinc-400 hover:text-rose-400 border border-white/[0.08] transition-all flex items-center justify-center disabled:opacity-50 cursor-pointer shadow-sm shrink-0"
+          className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 text-stone-400 hover:text-rose-400 border border-white/[0.08] transition-all flex items-center justify-center disabled:opacity-50 cursor-pointer shadow-sm shrink-0"
           title="Reset demo to unverified baseline"
           aria-label="Reset demo to unverified baseline"
         >
@@ -206,7 +214,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] active:scale-95 text-zinc-400 hover:text-white border border-white/[0.08] transition-all flex items-center justify-center disabled:opacity-50 cursor-pointer shadow-sm shrink-0"
+            className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 text-stone-400 hover:text-white border border-white/[0.08] transition-all flex items-center justify-center disabled:opacity-50 cursor-pointer shadow-sm shrink-0"
             title="Refresh status"
             aria-label="Refresh status"
           >

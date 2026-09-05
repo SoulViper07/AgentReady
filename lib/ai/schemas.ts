@@ -26,6 +26,7 @@ export const ExtractedCatalogSchema = z.object({
   products: z.array(ExtractedProductSchema),
   policies: z.array(ExtractedPolicySchema),
   consistencyFlags: z.array(ConsistencyFlagSchema).default([]),
+  providerUsed: z.enum(['gemini', 'groq', 'deterministic', 'openai']).optional(),
 });
 
 export type ExtractedProduct = z.infer<typeof ExtractedProductSchema>;

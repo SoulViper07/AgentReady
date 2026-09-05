@@ -41,6 +41,8 @@ export interface IssueCardProps {
     name: string;
     price: number | null;
     inventory: number | null;
+    priceVerified?: boolean;
+    inventoryVerified?: boolean;
   }>;
   onResolve: (payload: {
     action: string;
@@ -65,11 +67,6 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   isResolving = false,
   mode = 'merchant',
 }) => {
-  // Match target product from description or products list
-  const matchedProduct = products.find((p) =>
-    issue.description.toLowerCase().includes(p.name.toLowerCase())
-  );
-
   // Parse conflict values if present (e.g. 250 and 200)
   const isConflict =
     issue.category === 'CONSISTENCY' ||
@@ -82,12 +79,33 @@ export const IssueCard: React.FC<IssueCardProps> = ({
     ? valuesMatch[2] || valuesMatch[3] || '200'
     : '200';
 
+  // Match target product from description, title, or products list with fallback
+  const matchedProduct =
+    products.find(
+      (p) =>
+        issue.description.toLowerCase().includes(p.name.toLowerCase()) ||
+        issue.title.toLowerCase().includes(p.name.toLowerCase())
+    ) ||
+    (issue.category === 'INVENTORY'
+      ? products.find((p) => p.name.includes('Double Dark')) ||
+        products.find((p) => p.inventory === null || !p.inventoryVerified)
+      : issue.category === 'PRICE' && !isConflict
+      ? products.find((p) => p.name.includes('Oats')) ||
+        products.find((p) => p.price === null || !p.priceVerified)
+      : isConflict
+      ? products.find((p) => p.name.includes('Signature'))
+      : undefined) ||
+    products[0];
+
   const [selectedPrice, setSelectedPrice] = useState<string>(detectedVal1);
   const [inputPrice, setInputPrice] = useState<string>(
     issue.advice?.draftContent || (matchedProduct?.name.includes('Dark') ? '220' : '200')
   );
   const [inputInventory, setInputInventory] = useState<string>(
-    issue.advice?.draftContent || '15'
+    issue.advice?.draftContent ||
+      (matchedProduct?.inventory !== null && matchedProduct?.inventory !== undefined
+        ? String(matchedProduct.inventory)
+        : '10')
   );
   const [policyText, setPolicyText] = useState<string>(
     issue.advice?.draftContent ||
@@ -203,7 +221,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   if (issue.resolved || justResolved) {
     return (
       <TiltCard className="rounded-2xl">
-        <div className="rounded-2xl bg-slate-900/80 border border-emerald-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-emerald-950/20 transition-all animate-in fade-in duration-500">
+        <div className="rounded-2xl bg-[#181A20]/90 border border-emerald-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl shadow-black/20 transition-all animate-in fade-in duration-500">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-5 h-5 text-emerald-400" />
@@ -217,7 +235,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   Verified
                 </span>
               </div>
-              <h4 className="text-sm font-semibold text-white mt-0.5">
+              <h4 className="text-sm font-semibold text-[#F8F9FA] mt-0.5">
                 {issue.title}
               </h4>
             </div>
@@ -236,7 +254,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   if (mode === 'merchant') {
     return (
       <TiltCard className="rounded-2xl">
-        <div className="rounded-2xl bg-[#111827] border border-slate-800/90 hover:border-slate-700 p-5 sm:p-6 shadow-xl flex flex-col gap-4 transition-all">
+        <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] hover:border-stone-700/80 p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4 transition-all">
         {/* Top Header */}
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-start gap-3">
@@ -247,8 +265,8 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   : issue.category === 'PRICE'
                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                   : issue.category === 'INVENTORY'
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                  : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                  ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
+                  : 'bg-stone-500/10 text-stone-300 border border-stone-500/20'
               }`}
             >
               {isConflict ? (
@@ -262,7 +280,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
               )}
             </div>
             <div>
-              <h3 className="text-base font-semibold text-white tracking-tight">
+              <h3 className="text-base font-semibold text-[#F8F9FA] tracking-tight">
                 {isConflict
                   ? `Confirm Price: ${matchedProduct?.name || 'Signature Choco Chip Cookies'}`
                   : issue.category === 'PRICE'
@@ -271,13 +289,13 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   ? `Confirm Stock: ${matchedProduct?.name || 'Double Dark Sea Salt Cookies'}`
                   : 'Perishable Goods Refund Disclaimer'}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
+              <p className="text-xs sm:text-sm text-stone-400 mt-1 leading-relaxed">
                 {isConflict
                   ? `WhatsApp mentions ₹${detectedVal1}, but legacy records list ₹${detectedVal2}. Select the authoritative price for autonomous buyers:`
                   : issue.category === 'PRICE'
                   ? 'AI buyers need a fixed unit price to propose orders without guessing.'
                   : issue.category === 'INVENTORY'
-                  ? 'Specify live batch inventory available for instant checkout.'
+                  ? 'Specify how many boxes are ready to bake or pack so AI buyers do not oversell.'
                   : 'Artisan baked goods require clear refund terms to protect against payment chargebacks.'}
               </p>
             </div>
@@ -286,7 +304,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${
               issue.severity === 'CRITICAL'
                 ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                : 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
             }`}
           >
             {issue.severity === 'CRITICAL' ? 'Action Required' : 'Recommended'}
@@ -294,7 +312,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
         </div>
 
         {/* Action Controls Body */}
-        <div className="pt-3 border-t border-slate-800/80">
+        <div className="pt-3 border-t border-white/[0.08]">
           {/* Case 1: Conflict */}
           {isConflict && (
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -305,7 +323,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-between border transition-all cursor-pointer ${
                     selectedPrice === detectedVal1
                       ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300 shadow-sm'
-                      : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-600'
+                      : 'bg-[#121316] border-white/[0.08] text-stone-300 hover:border-stone-600'
                   }`}
                 >
                   <span>₹{detectedVal1} (Recent)</span>
@@ -319,11 +337,11 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-between border transition-all cursor-pointer ${
                     selectedPrice === detectedVal2
                       ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300 shadow-sm'
-                      : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-600'
+                      : 'bg-[#121316] border-white/[0.08] text-stone-300 hover:border-stone-600'
                   }`}
                 >
                   <span>₹{detectedVal2} (Legacy)</span>
-                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[#181A20] text-stone-400 border border-white/[0.06]">
                     CSV
                   </span>
                 </button>
@@ -356,7 +374,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           {!isConflict && issue.category === 'PRICE' && (
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="relative flex-1 flex items-center">
-                <span className="absolute left-3.5 text-slate-400 font-semibold text-sm pointer-events-none">
+                <span className="absolute left-3.5 text-stone-400 font-semibold text-sm pointer-events-none">
                   ₹
                 </span>
                 <input
@@ -364,7 +382,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   value={inputPrice}
                   onChange={(e) => setInputPrice(e.target.value)}
                   placeholder="220"
-                  className="w-full min-h-[44px] pl-8 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm font-semibold focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full min-h-[44px] pl-8 pr-4 py-2 rounded-xl bg-[#121316] border border-white/[0.08] text-[#F8F9FA] text-sm font-semibold focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-colors"
                 />
               </div>
 
@@ -398,10 +416,10 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   type="number"
                   value={inputInventory}
                   onChange={(e) => setInputInventory(e.target.value)}
-                  placeholder="15"
-                  className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm font-semibold focus:outline-none focus:border-emerald-500 transition-colors"
+                  placeholder="10"
+                  className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#121316] border border-white/[0.08] text-[#F8F9FA] text-sm font-semibold focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-colors"
                 />
-                <span className="absolute right-3.5 text-slate-400 text-xs font-mono pointer-events-none">
+                <span className="absolute right-3.5 text-stone-400 text-xs font-mono pointer-events-none">
                   boxes in stock
                 </span>
               </div>
@@ -412,7 +430,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   handleAction({
                     action: 'VERIFY_PRODUCT',
                     productId: matchedProduct?.id,
-                    inventory: parseInt(inputInventory, 10),
+                    inventory: parseInt(inputInventory, 10) || 10,
                   })
                 }
                 disabled={loadingThis || isResolving || !matchedProduct}
@@ -423,7 +441,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                 ) : (
                   <ArrowRight className="w-4 h-4" />
                 )}
-                Lock Verified Stock
+                Authorise Stock
               </button>
             </div>
           )}
@@ -431,7 +449,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           {/* Case 4: Missing Policy */}
           {issue.category === 'POLICY' && (
             <div className="flex flex-col gap-3">
-              <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 leading-relaxed italic">
+              <div className="p-3.5 rounded-xl bg-[#121316] border border-white/[0.08] text-xs text-stone-300 leading-relaxed italic">
                 &ldquo;{policyText}&rdquo;
               </div>
 
@@ -439,7 +457,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowPolicyPreview(!showPolicyPreview)}
-                  className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="text-xs text-stone-400 hover:text-[#F8F9FA] flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   {showPolicyPreview ? (
                     <ChevronUp className="w-3.5 h-3.5" />
@@ -476,7 +494,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   rows={3}
                   value={policyText}
                   onChange={(e) => setPolicyText(e.target.value)}
-                  className="w-full mt-1 p-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full mt-1 p-3 rounded-xl bg-[#121316] border border-white/[0.08] text-stone-200 text-xs focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-colors"
                 />
               )}
             </div>
@@ -491,9 +509,9 @@ export const IssueCard: React.FC<IssueCardProps> = ({
 
   return (
     <TiltCard className="rounded-2xl">
-      <div className="rounded-2xl bg-zinc-900/90 border border-zinc-800/90 hover:border-zinc-700/80 transition-all p-5 shadow-xl flex flex-col gap-4">
+      <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] hover:border-stone-700/80 transition-all p-5 shadow-xl shadow-black/20 flex flex-col gap-4">
       {/* Top Meta Bar */}
-      <div className="flex items-center justify-between gap-3 flex-wrap border-b border-zinc-800/80 pb-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap border-b border-white/[0.08] pb-3">
         <div className="flex items-center gap-2 flex-wrap">
           {getSeverityBadge(issue.severity)}
           <AuthorityTag
@@ -503,18 +521,18 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           />
         </div>
         {matchedProduct && (
-          <span className="text-xs font-mono text-zinc-400 truncate max-w-[220px]">
-            Catalog Item: <strong className="text-zinc-200">{matchedProduct.name}</strong>
+          <span className="text-xs font-mono text-stone-400 truncate max-w-[220px]">
+            Catalog Item: <strong className="text-stone-200">{matchedProduct.name}</strong>
           </span>
         )}
       </div>
 
       {/* Title & Overview */}
       <div>
-        <h3 className="text-base font-bold text-white tracking-tight">
+        <h3 className="text-base font-bold text-[#F8F9FA] tracking-tight">
           {issue.title}
         </h3>
-        <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+        <p className="text-xs text-stone-400 mt-1 leading-relaxed">
           {issue.description}
         </p>
       </div>
@@ -522,14 +540,14 @@ export const IssueCard: React.FC<IssueCardProps> = ({
       {/* Cursor/GitHub 3-Sub-Panel Visual Diff Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
         {/* Left Sub-Panel: Raw Evidence Extract (4 Cols) */}
-        <div className="lg:col-span-4 rounded-xl bg-black/80 border border-zinc-800 p-3.5 flex flex-col justify-between font-mono text-xs">
+        <div className="lg:col-span-4 rounded-xl bg-[#121316] border border-white/[0.08] p-3.5 flex flex-col justify-between font-mono text-xs">
           <div>
-            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-zinc-800/80 text-[10px] text-zinc-400 uppercase tracking-wider">
-              <span className="flex items-center gap-1.5 text-zinc-300">
-                <Terminal className="w-3 h-3 text-cyan-400" />
+            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-white/[0.06] text-[10px] text-stone-400 uppercase tracking-wider">
+              <span className="flex items-center gap-1.5 text-stone-300">
+                <Terminal className="w-3 h-3 text-amber-400" />
                 Raw Evidence Extract
               </span>
-              <span className="text-zinc-500">Multimodal Provenance</span>
+              <span className="text-stone-500">Multimodal Provenance</span>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -542,12 +560,12 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                       : line.variant === 'conflict-b'
                       ? 'bg-amber-950/30 border-amber-500/30 text-amber-200'
                       : line.variant === 'rule'
-                      ? 'bg-zinc-900 border-zinc-800 text-zinc-400'
-                      : 'bg-zinc-900/60 border-zinc-800/80 text-zinc-300'
+                      ? 'bg-[#181A20] border-white/[0.06] text-stone-400'
+                      : 'bg-[#181A20]/60 border-white/[0.06] text-stone-300'
                   }`}
                 >
-                  <div className="flex items-center justify-between text-[10px] text-zinc-500 pb-1 mb-1 border-b border-white/5">
-                    <span className="text-zinc-400 font-semibold">
+                  <div className="flex items-center justify-between text-[10px] text-stone-500 pb-1 mb-1 border-b border-white/5">
+                    <span className="text-stone-400 font-semibold">
                       [{line.source}]
                     </span>
                     <span>L:{line.num}</span>
@@ -558,31 +576,31 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             </div>
           </div>
 
-          <div className="mt-3 pt-2 border-t border-zinc-900 text-[10px] text-zinc-500 flex items-center justify-between">
+          <div className="mt-3 pt-2 border-t border-white/[0.06] text-[10px] text-stone-500 flex items-center justify-between">
             <span>Provenance check: PASSED</span>
-            <span className="text-violet-400">Zero Hallucination</span>
+            <span className="text-amber-400/90 font-medium">Zero Hallucination</span>
           </div>
         </div>
 
         {/* Center Sub-Panel: AI Remediation Diagnosis (4 Cols) */}
-        <div className="lg:col-span-4 rounded-xl bg-violet-950/20 border border-violet-500/25 p-3.5 flex flex-col justify-between text-xs">
+        <div className="lg:col-span-4 rounded-xl bg-amber-950/15 border border-amber-500/20 p-3.5 flex flex-col justify-between text-xs">
           <div>
-            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-violet-500/20 text-[10px] text-violet-300 font-mono uppercase tracking-wider">
+            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-amber-500/20 text-[10px] text-amber-300 font-mono uppercase tracking-wider">
               <span className="flex items-center gap-1.5 font-bold">
-                <Sparkles className="w-3 h-3 text-violet-400" />
+                <Sparkles className="w-3 h-3 text-amber-400" />
                 AI Remediation Diagnosis
               </span>
-              <span className="text-violet-400/80">Agent Impact</span>
+              <span className="text-amber-400/80">Agent Impact</span>
             </div>
 
-            <p className="text-xs text-zinc-300 leading-relaxed">
+            <p className="text-xs text-stone-300 leading-relaxed">
               {issue.advice?.explanation ||
                 'Autonomous AI buyers verify mathematical consistency before authorizing settlement. Inconsistent or missing ground truth trips safety gates.'}
             </p>
 
             {issue.advice?.suggestedAction && (
-              <div className="mt-2.5 p-2 rounded-lg bg-violet-950/40 border border-violet-500/30 text-[11px] text-violet-200 font-mono">
-                <span className="text-violet-400 font-bold block text-[10px] uppercase">
+              <div className="mt-2.5 p-2 rounded-lg bg-amber-950/30 border border-amber-500/30 text-[11px] text-amber-200 font-mono">
+                <span className="text-amber-400 font-bold block text-[10px] uppercase">
                   Suggested Action:
                 </span>
                 {issue.advice.suggestedAction}
@@ -590,31 +608,31 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             )}
           </div>
 
-          <div className="mt-3 pt-2 border-t border-violet-500/20 flex items-center justify-between text-[10px] font-mono text-violet-300/80">
+          <div className="mt-3 pt-2 border-t border-amber-500/20 flex items-center justify-between text-[10px] font-mono text-amber-300/80">
             <span>Gate Risk: CRITICAL</span>
             <span className="text-rose-400 font-semibold">Will Block AI Buyer</span>
           </div>
         </div>
 
         {/* Right Sub-Panel: Authoritative Resolution Action (4 Cols) */}
-        <div className="lg:col-span-4 rounded-xl bg-zinc-950/90 border border-zinc-800 p-3.5 flex flex-col justify-between text-xs">
+        <div className="lg:col-span-4 rounded-xl bg-[#121316] border border-white/[0.08] p-3.5 flex flex-col justify-between text-xs">
           <div>
-            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-zinc-800/80 text-[10px] text-zinc-400 font-mono uppercase tracking-wider">
-              <span className="flex items-center gap-1.5 text-zinc-200 font-bold">
+            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-white/[0.06] text-[10px] text-stone-400 font-mono uppercase tracking-wider">
+              <span className="flex items-center gap-1.5 text-stone-200 font-bold">
                 <ShieldCheck className="w-3 h-3 text-emerald-400" />
                 Authoritative Action
               </span>
-              <span className="text-sky-400">HITL Required</span>
+              <span className="text-amber-400 font-semibold">HITL Required</span>
             </div>
 
             {/* Case 1: Price Conflict */}
             {isConflict && (
               <div className="flex flex-col gap-2.5">
-                <span className="text-[11px] text-zinc-400 font-medium">
+                <span className="text-[11px] text-stone-400 font-medium">
                   Select Authoritative Ground Truth:
                 </span>
                 <div className="flex flex-col gap-1.5">
-                  <label className="flex items-center justify-between p-2 rounded-lg bg-zinc-900 border border-zinc-800 cursor-pointer hover:border-emerald-500/40 text-xs text-zinc-200 transition-colors">
+                  <label className="flex items-center justify-between p-2 rounded-lg bg-[#181A20] border border-white/[0.08] cursor-pointer hover:border-emerald-500/40 text-xs text-stone-200 transition-colors">
                     <span className="flex items-center gap-2">
                       <input
                         type="radio"
@@ -631,7 +649,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                     </span>
                   </label>
 
-                  <label className="flex items-center justify-between p-2 rounded-lg bg-zinc-900 border border-zinc-800 cursor-pointer hover:border-emerald-500/40 text-xs text-zinc-200 transition-colors">
+                  <label className="flex items-center justify-between p-2 rounded-lg bg-[#181A20] border border-white/[0.08] cursor-pointer hover:border-emerald-500/40 text-xs text-stone-200 transition-colors">
                     <span className="flex items-center gap-2">
                       <input
                         type="radio"
@@ -671,7 +689,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             {/* Case 2: Missing Price */}
             {!isConflict && issue.category === 'PRICE' && (
               <div className="flex flex-col gap-2.5">
-                <span className="text-[11px] text-zinc-400 font-medium">
+                <span className="text-[11px] text-stone-400 font-medium">
                   Authorise Verified Unit Price (₹):
                 </span>
                 <div className="flex items-center gap-2">
@@ -680,11 +698,11 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                     value={inputPrice}
                     onChange={(e) => setInputPrice(e.target.value)}
                     placeholder="220"
-                    className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-100 focus:outline-none focus:border-emerald-500 font-mono"
+                    className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-[#181A20] border border-white/[0.08] text-stone-100 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 font-mono"
                   />
-                  <span className="text-[11px] text-zinc-400 font-mono">INR</span>
+                  <span className="text-[11px] text-stone-400 font-mono">INR</span>
                 </div>
-                <span className="text-[10px] text-zinc-500 font-mono">
+                <span className="text-[10px] text-stone-500 font-mono">
                   Suggested from catalog: ₹{issue.advice?.draftContent || '220'}
                 </span>
 
@@ -712,7 +730,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             {/* Case 3: Missing Inventory */}
             {!isConflict && issue.category === 'INVENTORY' && (
               <div className="flex flex-col gap-2.5">
-                <span className="text-[11px] text-zinc-400 font-medium">
+                <span className="text-[11px] text-stone-400 font-medium">
                   Authorise In-Stock Batch Inventory:
                 </span>
                 <div className="flex items-center gap-2">
@@ -721,11 +739,11 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                     value={inputInventory}
                     onChange={(e) => setInputInventory(e.target.value)}
                     placeholder="15"
-                    className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-100 focus:outline-none focus:border-cyan-500 font-mono"
+                    className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-[#181A20] border border-white/[0.08] text-stone-100 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 font-mono"
                   />
-                  <span className="text-[11px] text-zinc-400 font-mono">boxes</span>
+                  <span className="text-[11px] text-stone-400 font-mono">boxes</span>
                 </div>
-                <span className="text-[10px] text-zinc-500 font-mono">
+                <span className="text-[10px] text-stone-500 font-mono">
                   Allocated batch: {issue.advice?.draftContent || '15'} boxes
                 </span>
 
@@ -734,18 +752,18 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                     handleAction({
                       action: 'VERIFY_PRODUCT',
                       productId: matchedProduct?.id,
-                      inventory: parseInt(inputInventory, 10),
+                      inventory: parseInt(inputInventory, 10) || 10,
                     })
                   }
                   disabled={loadingThis || isResolving || !matchedProduct}
-                  className="w-full mt-2 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-all shadow-md shadow-cyan-950 disabled:opacity-50 cursor-pointer"
+                  className="w-full mt-2 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all shadow-md shadow-emerald-950 disabled:opacity-50 cursor-pointer"
                 >
                   {loadingThis ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <ArrowRight className="w-3.5 h-3.5" />
                   )}
-                  Lock Verified Stock
+                  Authorise Stock
                 </button>
               </div>
             )}
@@ -753,14 +771,14 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             {/* Case 4: Missing Policy */}
             {issue.category === 'POLICY' && (
               <div className="flex flex-col gap-2">
-                <span className="text-[11px] text-zinc-400 font-medium">
+                <span className="text-[11px] text-stone-400 font-medium">
                   Review & Sign Standardized Terms:
                 </span>
                 <textarea
                   rows={3}
                   value={policyText}
                   onChange={(e) => setPolicyText(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-[11px] rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-200 focus:outline-none focus:border-purple-500 resize-none font-sans leading-relaxed"
+                  className="w-full px-2.5 py-1.5 text-[11px] rounded-lg bg-[#181A20] border border-white/[0.08] text-stone-200 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 resize-none font-sans leading-relaxed"
                 />
 
                 <button
@@ -773,22 +791,22 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                     })
                   }
                   disabled={loadingThis || isResolving}
-                  className="w-full mt-1.5 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition-all shadow-md shadow-purple-950 disabled:opacity-50 cursor-pointer"
+                  className="w-full mt-1.5 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold transition-all shadow-md shadow-amber-950 disabled:opacity-50 cursor-pointer"
                 >
                   {loadingThis ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <ArrowRight className="w-3.5 h-3.5" />
                   )}
-                  Sign & Approve Policy
+                  Sign &amp; Approve Policy
                 </button>
               </div>
             )}
           </div>
 
-          <div className="mt-2.5 pt-2 border-t border-zinc-900 text-[10px] text-zinc-500 flex items-center justify-between">
+          <div className="mt-2.5 pt-2 border-t border-white/[0.06] text-[10px] text-stone-500 flex items-center justify-between">
             <span>Target: Database Ground Truth</span>
-            <span className="text-sky-400">Flips to Verified</span>
+            <span className="text-emerald-400 font-medium">Flips to Verified</span>
           </div>
         </div>
       </div>

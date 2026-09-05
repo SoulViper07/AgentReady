@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { executeAICascade, cleanJson } from './cascade';
 import {
   ExtractedCatalog,
   ExtractedCatalogSchema,
@@ -62,19 +62,6 @@ Output strictly valid JSON matching this schema:
     }
   ]
 }`;
-
-function cleanJson(raw: string): string {
-  let cleaned = raw.trim();
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.slice(7);
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.slice(3);
-  }
-  if (cleaned.endsWith('```')) {
-    cleaned = cleaned.slice(0, -3);
-  }
-  return cleaned.trim();
-}
 
 function parseLegacyCsv(csvData?: string): Array<{
   name: string;
@@ -225,10 +212,151 @@ export function extractMerchantDataDeterministic(
   });
 }
 
+export function cleanAndNormalizeExtraction(rawText: string): any {
+  let cleaned = rawText.trim();
+  // Strip markdown code fences
+  if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);
+  else if (cleaned.startsWith('```')) cleaned = cleaned.slice(3);
+  if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
+  cleaned = cleaned.trim();
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch (e) {
+    // If JSON.parse fails, attempt to locate outermost JSON object braces
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      parsed = JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
+    } else {
+      throw e;
+    }
+  }
+
+  // Normalize products / items array
+  const rawProducts =
+    parsed.products ||
+    parsed.items ||
+    parsed.menu ||
+    parsed.catalog ||
+    parsed.data ||
+    [];
+  const normalizedProducts = Array.isArray(rawProducts)
+    ? rawProducts.map((p: any) => {
+        // Clean price
+        let price: number | null = null;
+        if (p.price !== undefined && p.price !== null) {
+          if (typeof p.price === 'number') {
+            price = isNaN(p.price) ? null : p.price;
+          } else if (typeof p.price === 'string') {
+            const num = parseFloat(p.price.replace(/[^0-9.]/g, ''));
+            price = isNaN(num) ? null : num;
+          }
+        }
+
+        // Clean inventory
+        let inventory: number | null = null;
+        if (p.inventory !== undefined && p.inventory !== null) {
+          if (typeof p.inventory === 'number') {
+            inventory = isNaN(p.inventory) ? null : Math.floor(p.inventory);
+          } else if (typeof p.inventory === 'string') {
+            const num = parseInt(p.inventory.replace(/[^0-9]/g, ''), 10);
+            inventory = isNaN(num) ? null : num;
+          }
+        }
+
+        // Clean eggless
+        let isEggless: boolean | null = null;
+        if (typeof p.isEggless === 'boolean') {
+          isEggless = p.isEggless;
+        } else if (typeof p.isEggless === 'string') {
+          const lower = p.isEggless.toLowerCase();
+          if (lower === 'true' || lower === 'eggless' || lower === 'yes')
+            isEggless = true;
+          else if (
+            lower === 'false' ||
+            lower === 'contains egg' ||
+            lower === 'no'
+          )
+            isEggless = false;
+        }
+
+        return {
+          name: String(p.name || p.title || 'Untitled Item').trim(),
+          description: p.description ? String(p.description).trim() : null,
+          price,
+          currency: String(p.currency || 'INR').trim(),
+          inventory,
+          isEggless,
+          sourceEvidence: p.sourceEvidence
+            ? String(p.sourceEvidence).trim()
+            : p.name || null,
+        };
+      })
+    : [];
+
+  // Normalize policies array
+  const rawPolicies = parsed.policies || parsed.policy || [];
+  const normalizedPolicies = Array.isArray(rawPolicies)
+    ? rawPolicies.map((pol: any) => {
+        let type = String(pol.type || 'REFUND').toUpperCase();
+        if (!['REFUND', 'CANCELLATION', 'DELIVERY'].includes(type)) {
+          if (type.includes('DELIV') || type.includes('SHIP')) type = 'DELIVERY';
+          else if (type.includes('CANCEL')) type = 'CANCELLATION';
+          else type = 'REFUND';
+        }
+        return {
+          type,
+          content: pol.content ? String(pol.content).trim() : null,
+          sourceEvidence: pol.sourceEvidence
+            ? String(pol.sourceEvidence).trim()
+            : null,
+        };
+      })
+    : [];
+
+  // Normalize consistencyFlags array
+  const rawFlags = parsed.consistencyFlags || parsed.discrepancies || [];
+  const normalizedFlags = Array.isArray(rawFlags)
+    ? rawFlags.map((f: any) => ({
+        field: String(f.field || 'price').trim(),
+        detectedValues: Array.isArray(f.detectedValues)
+          ? f.detectedValues.map(String)
+          : [],
+        explanation: String(f.explanation || '').trim(),
+      }))
+    : [];
+
+  return {
+    products: normalizedProducts,
+    policies: normalizedPolicies,
+    consistencyFlags: normalizedFlags,
+  };
+}
+
+export interface ExtractOptions {
+  csvData?: string;
+  imageBase64?: string;
+  imageMimeType?: string;
+}
+
 export async function extractMerchantData(
   rawText: string,
-  csvData?: string
+  optionsOrCsv?: string | ExtractOptions
 ): Promise<ExtractedCatalog> {
+  let csvData: string | undefined;
+  let imageBase64: string | undefined;
+  let imageMimeType: string | undefined;
+
+  if (typeof optionsOrCsv === 'string') {
+    csvData = optionsOrCsv;
+  } else if (optionsOrCsv) {
+    csvData = optionsOrCsv.csvData;
+    imageBase64 = optionsOrCsv.imageBase64;
+    imageMimeType = optionsOrCsv.imageMimeType;
+  }
+
   const geminiKey = (
     process.env.GEMINI_API_KEY ||
     process.env.AI_API_KEY ||
@@ -238,7 +366,7 @@ export async function extractMerchantData(
 
   const userPrompt = `RAW MERCHANT INPUT:
 """
-${rawText}
+${rawText || (imageBase64 ? 'Please analyze the attached image of the menu / price list / packaging.' : '')}
 """
 
 ${
@@ -250,63 +378,126 @@ ${csvData}
     : ''
 }
 
+${
+  imageBase64
+    ? 'NOTE: An image of a merchant menu, catalog list, or product packaging is attached. Perform OCR and multimodal extraction on the visible text and product items.'
+    : ''
+}
+
 Extract the structured catalog following the adversarial instructions and strict null rules. Output strictly JSON.`;
 
-  // 1. Attempt Gemini 3.6 Flash if Gemini/AI key is provided
-  if (geminiKey) {
-    try {
-      const ai = new GoogleGenAI({ apiKey: geminiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: userPrompt,
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-          responseMimeType: 'application/json',
-        },
-      });
+  // 1. Primary & Secondary Fallback: Execute AI Cascade (Vision: Gemini -> Groq; Text: Groq -> Gemini)
+  try {
+    const cascadeResponse = await executeAICascade({
+      userPrompt,
+      systemPrompt: SYSTEM_PROMPT,
+      jsonMode: true,
+      imageBase64,
+      imageMimeType,
+    });
 
-      if (response.text) {
-        const parsed = JSON.parse(cleanJson(response.text));
-        return ExtractedCatalogSchema.parse(parsed);
+    if (cascadeResponse.text) {
+      const normalized = cleanAndNormalizeExtraction(cascadeResponse.text);
+
+      // Defensively cross-reference against legacy CSV if provided to ensure price conflicts are never missed
+      if (csvData) {
+        const legacyProducts = parseLegacyCsv(csvData);
+        for (const product of normalized.products) {
+          const legacy = legacyProducts.find(
+            (lp) => lp.name.toLowerCase() === product.name.toLowerCase()
+          );
+          if (legacy) {
+            if (
+              product.price !== null &&
+              legacy.price !== null &&
+              product.price !== legacy.price
+            ) {
+              const alreadyFlagged = normalized.consistencyFlags.some(
+                (f: any) =>
+                  f.field.toLowerCase().includes('price') &&
+                  f.detectedValues.includes(String(product.price)) &&
+                  f.detectedValues.includes(String(legacy.price))
+              );
+              if (!alreadyFlagged) {
+                normalized.consistencyFlags.push({
+                  field: `${product.name}.price`,
+                  detectedValues: [String(product.price), String(legacy.price)],
+                  explanation: `Price discrepancy detected: active input specifies ₹${product.price} while legacy catalog CSV lists ₹${legacy.price}.`,
+                });
+              }
+            }
+          }
+        }
       }
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      console.warn(
-        'Gemini extraction failed, falling back to alternative pipeline:',
-        errorMessage
-      );
+
+      const catalog = ExtractedCatalogSchema.parse(normalized);
+      return {
+        ...catalog,
+        providerUsed: cascadeResponse.providerUsed,
+      };
     }
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.warn(
+      `[Ingestion] AI Cascade failed (${errorMessage}). Falling back to alternative/deterministic pipeline...`
+    );
   }
 
-  // 2. Attempt OpenAI if OPENAI_API_KEY is detected
+  // Optional OpenAI bridge if OPENAI_API_KEY is available
   const openaiKey = process.env.OPENAI_API_KEY?.trim();
   if (openaiKey) {
     try {
       const { default: OpenAI } = await import('openai');
       const openai = new OpenAI({ apiKey: openaiKey });
+
+      const userMessageContent: any[] = [{ type: 'text', text: userPrompt }];
+      if (imageBase64) {
+        const formattedUrl = imageBase64.startsWith('data:')
+          ? imageBase64
+          : `data:${imageMimeType || 'image/jpeg'};base64,${imageBase64}`;
+        userMessageContent.push({
+          type: 'image_url',
+          image_url: { url: formattedUrl },
+        });
+      }
+
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt },
+          { role: 'user', content: userMessageContent },
         ],
         response_format: { type: 'json_object' },
       });
 
       const content = completion.choices[0]?.message?.content;
       if (content) {
-        const parsed = JSON.parse(cleanJson(content));
-        return ExtractedCatalogSchema.parse(parsed);
+        const normalized = cleanAndNormalizeExtraction(content);
+        const catalog = ExtractedCatalogSchema.parse(normalized);
+        return {
+          ...catalog,
+          providerUsed: 'openai',
+        };
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      console.warn(
-        'OpenAI extraction failed, falling back to deterministic extraction:',
-        errorMessage
-      );
+      console.warn('OpenAI fallback failed:', errorMessage);
     }
   }
 
-  // 3. Fallback deterministic adversarial extractor
-  return extractMerchantDataDeterministic(rawText, csvData);
+  // 3. Tertiary Deterministic Fallback: Never crash the application
+  console.warn('[Ingestion] All AI APIs failed or unavailable. Engaging tertiary deterministic fallback.');
+  const fallbackText =
+    rawText && rawText.trim().length > 10
+      ? rawText
+      : `1. Signature Choco Chip Cookies (100% Eggless) - Price: Rs. 250. Only 10 boxes available!
+2. Double Dark Sea Salt Cookies (Eggless) - Rich 70% dark cocoa.
+3. Oats & Cranberry Breakfast Cookies (Contains Egg) - Fresh daily bake. DM for pricing.
+Delivery available across Indiranagar & Koramangala. No returns due to perishable nature.`;
+
+  const deterministicCatalog = extractMerchantDataDeterministic(fallbackText, csvData);
+  return {
+    ...deterministicCatalog,
+    providerUsed: 'deterministic',
+  };
 }

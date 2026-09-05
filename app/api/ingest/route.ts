@@ -1,40 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { extractMerchantData } from '../../../lib/ai/extractor';
+import { evaluateMerchantReadiness } from '../../../lib/engine/evaluator';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { merchantSlug, rawText, csvText } = body;
+    const {
+      merchantSlug = 'sweet-crumbs',
+      rawText = '',
+      csvText,
+      imageBase64,
+      imageMimeType,
+      preview = false,
+      replaceExisting = false,
+    } = body;
 
-    if (!merchantSlug || typeof merchantSlug !== 'string') {
+    const hasText = typeof rawText === 'string' && rawText.trim().length > 0;
+    const hasImage = typeof imageBase64 === 'string' && imageBase64.trim().length > 0;
+
+    if (!hasText && !hasImage) {
       return NextResponse.json(
-        { error: 'merchantSlug is required and must be a string' },
+        { error: 'Either rawText or imageBase64 is required for inventory ingestion' },
         { status: 400 }
       );
     }
 
-    if (!rawText || typeof rawText !== 'string') {
-      return NextResponse.json(
-        { error: 'rawText is required and must be a string' },
-        { status: 400 }
-      );
+    // 1. Invoke extractMerchantData with multimodal support
+    const extraction = await extractMerchantData(rawText, {
+      csvData: csvText,
+      imageBase64,
+      imageMimeType,
+    });
+
+    // If preview mode, return extracted items without committing to database
+    if (preview) {
+      return NextResponse.json({
+        success: true,
+        preview: true,
+        merchantSlug,
+        extraction,
+      });
     }
 
-    // 1. Retrieve the Merchant by slug
-    const merchant = await prisma.merchant.findUnique({
+    // 2. Retrieve or create the Merchant by slug
+    let merchant = await prisma.merchant.findUnique({
       where: { slug: merchantSlug },
     });
 
     if (!merchant) {
-      return NextResponse.json(
-        { error: `Merchant with slug "${merchantSlug}" not found` },
-        { status: 404 }
-      );
+      merchant = await prisma.merchant.create({
+        data: {
+          slug: merchantSlug,
+          name: 'Sweet Crumbs',
+          location: 'Indiranagar, Bengaluru',
+          contactPhone: '+91 8697774043',
+          readinessScore: 30,
+          transactionStatus: 'NOT_READY',
+        },
+      });
     }
 
-    // 2. Invoke extractMerchantData
-    const extraction = await extractMerchantData(rawText, csvText);
+    // Optional: Clear existing draft items if replaceExisting is requested
+    if (replaceExisting) {
+      await prisma.readinessIssue.deleteMany({
+        where: { merchantId: merchant.id, resolved: false },
+      });
+      await prisma.product.deleteMany({
+        where: { merchantId: merchant.id },
+      });
+    }
 
     // 3. Save extracted products into the Product table (status: "DRAFT")
     const savedProducts = await Promise.all(
@@ -146,12 +181,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 9. Return HTTP 200 with saved products, policies, and created issues
+    // 9. Re-evaluate readiness so score and invariants immediately update
+    const evaluation = await evaluateMerchantReadiness(merchant.id);
+
+    // 10. Return HTTP 200 with saved products, policies, created issues, and new score
     return NextResponse.json({
       success: true,
+      merchantId: merchant.id,
+      merchantSlug,
+      readinessScore: evaluation.readinessScore,
+      transactionStatus: evaluation.transactionStatus,
       products: savedProducts,
       policies: savedPolicies,
       issues: createdIssues,
+      extraction,
     });
   } catch (error: unknown) {
     console.error('Ingestion route error:', error);

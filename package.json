@@ -14,24 +14,31 @@
     "test:phase5": "ts-node scripts/test-phase5-remediation.ts",
     "test:phase6": "ts-node scripts/test-phase6-buyer.ts",
     "test:phase7": "ts-node scripts/test-phase7-transaction.ts",
-    "test:phase8": "ts-node scripts/test-phase8-audit.ts"
+    "test:phase8": "ts-node scripts/test-phase8-audit.ts",
+    "test:buyer-dynamic": "ts-node scripts/test-buyer-dynamic.ts",
+    "test:cascade": "ts-node scripts/test-cascade.ts"
   },
   "dependencies": {
     "@google/genai": "^2.21.0",
     "@prisma/client": "^6.19.3",
+    "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "framer-motion": "^13.2.0",
+    "groq": "^6.12.0",
+    "groq-sdk": "^1.6.0",
     "lucide-react": "^1.41.0",
     "next": "16.3.4",
     "openai": "^7.10.0",
     "razorpay": "^2.9.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "sdk": "^0.5.0",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.5.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20.19.43",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19",

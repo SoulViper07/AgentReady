@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { executeAICascade, cleanJson } from './cascade';
 
 export interface RemediationIssueInput {
   id?: string;
@@ -101,67 +101,25 @@ Provide:
 
 Return strictly JSON with keys: "explanation", "suggestedAction", "draftContent".`;
 
-  // 1. Try Gemini
-  if (geminiKey) {
-    try {
-      const ai = new GoogleGenAI({ apiKey: geminiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-        },
-      });
+  // 1. Execute AI Cascade (Groq Primary -> Gemini Cascade Secondary Fallback)
+  try {
+    const cascadeRes = await executeAICascade({
+      userPrompt: prompt,
+      jsonMode: true,
+    });
 
-      if (response.text) {
-        let cleaned = response.text.trim();
-        if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);
-        if (cleaned.startsWith('```')) cleaned = cleaned.slice(3);
-        if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
-        const parsed = JSON.parse(cleaned.trim());
-        if (parsed.explanation && parsed.suggestedAction) {
-          return {
-            explanation: parsed.explanation,
-            suggestedAction: parsed.suggestedAction,
-            draftContent: parsed.draftContent || undefined,
-          };
-        }
+    if (cascadeRes.text) {
+      const parsed = JSON.parse(cleanJson(cascadeRes.text));
+      if (parsed.explanation && parsed.suggestedAction) {
+        return {
+          explanation: parsed.explanation,
+          suggestedAction: parsed.suggestedAction,
+          draftContent: parsed.draftContent || undefined,
+        };
       }
-    } catch {
-      // Gracefully fall through
     }
-  }
-
-  // 2. Try OpenAI
-  const openaiKey = process.env.OPENAI_API_KEY?.trim();
-  if (openaiKey) {
-    try {
-      const { default: OpenAI } = await import('openai');
-      const openai = new OpenAI({ apiKey: openaiKey });
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-      });
-
-      const content = completion.choices[0]?.message?.content;
-      if (content) {
-        let cleaned = content.trim();
-        if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);
-        if (cleaned.startsWith('```')) cleaned = cleaned.slice(3);
-        if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
-        const parsed = JSON.parse(cleaned.trim());
-        if (parsed.explanation && parsed.suggestedAction) {
-          return {
-            explanation: parsed.explanation,
-            suggestedAction: parsed.suggestedAction,
-            draftContent: parsed.draftContent || undefined,
-          };
-        }
-      }
-    } catch {
-      // Gracefully fall through
-    }
+  } catch {
+    // Gracefully fall through to deterministic advice engine
   }
 
   // 3. Fallback deterministic advice engine

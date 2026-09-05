@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import * as fs from 'fs';
-import * as path from 'path';
 import { prisma } from '../../../../lib/prisma';
-import { extractMerchantData } from '../../../../lib/ai/extractor';
 import { evaluateMerchantReadiness } from '../../../../lib/engine/evaluator';
 
 export async function POST() {
@@ -41,107 +38,124 @@ export async function POST() {
       },
     });
 
-    // 3. Ingest raw seed files
-    const chatPath = path.resolve(process.cwd(), 'seed/sweet_crumbs_chat.txt');
-    const csvPath = path.resolve(process.cwd(), 'seed/legacy_menu.csv');
+    // 3. Guaranteed Seed Baseline for Products:
+    // 1. Signature Choco Chip Cookies: price: 250, priceVerified: false, inventory: 10, inventoryVerified: false, isEggless: true, status: "DRAFT"
+    // 2. Double Dark Sea Salt Cookies: price: null, priceVerified: false, inventory: null, inventoryVerified: false, isEggless: true, status: "DRAFT"
+    // 3. Oats & Cranberry Breakfast Cookies: price: null, priceVerified: false, inventory: null, inventoryVerified: false, isEggless: false, status: "DRAFT"
+    const savedProducts = await Promise.all([
+      prisma.product.create({
+        data: {
+          merchantId: merchant.id,
+          name: 'Signature Choco Chip Cookies',
+          description: 'Artisan hand-crafted cookies with rich Belgian chocolate chips.',
+          price: 250,
+          currency: 'INR',
+          inventory: 10,
+          isEggless: true,
+          status: 'DRAFT',
+          priceVerified: false,
+          inventoryVerified: false,
+          sourceEvidence: 'WhatsApp: ₹250/box (10 boxes left) | CSV: 200,15,Eggless',
+        },
+      }),
+      prisma.product.create({
+        data: {
+          merchantId: merchant.id,
+          name: 'Double Dark Sea Salt Cookies',
+          description: 'Dark cocoa artisan biscuits topped with Maldon sea salt crystals.',
+          price: null,
+          currency: 'INR',
+          inventory: null,
+          isEggless: true,
+          status: 'DRAFT',
+          priceVerified: false,
+          inventoryVerified: false,
+          sourceEvidence: 'WhatsApp: Fresh batch ready, DM to order | CSV: Double Dark Sea Salt Cookies,Artisan recipe,220,Eggless',
+        },
+      }),
+      prisma.product.create({
+        data: {
+          merchantId: merchant.id,
+          name: 'Oats & Cranberry Breakfast Cookies',
+          description: 'Rolled oats with sun-dried cranberries and organic honey.',
+          price: null,
+          currency: 'INR',
+          inventory: null,
+          isEggless: false,
+          status: 'DRAFT',
+          priceVerified: false,
+          inventoryVerified: false,
+          sourceEvidence: 'Menu OCR: Price on request / seasonal availability',
+        },
+      }),
+    ]);
 
-    const rawText = fs.readFileSync(chatPath, 'utf8');
-    const csvText = fs.readFileSync(csvPath, 'utf8');
+    // 4. Default unverified policy
+    const savedPolicies = await Promise.all([
+      prisma.policy.create({
+        data: {
+          merchantId: merchant.id,
+          type: 'REFUND',
+          content: null,
+          sourceEvidence: 'Merchant chat: No explicit refund or cancellation terms found in catalog data.',
+          isVerified: false,
+        },
+      }),
+    ]);
 
-    const extraction = await extractMerchantData(rawText, csvText);
-
-    // Save extracted products
-    const savedProducts = await Promise.all(
-      extraction.products.map((p) =>
-        prisma.product.create({
-          data: {
-            merchantId: merchant.id,
-            name: p.name,
-            description: p.description,
-            price: p.price,
-            currency: p.currency,
-            inventory: p.inventory,
-            isEggless: p.isEggless,
-            sourceEvidence: p.sourceEvidence,
-            status: 'DRAFT',
-            priceVerified: false,
-            inventoryVerified: false,
-          },
-        })
-      )
-    );
-
-    // Save extracted policies
-    const savedPolicies = await Promise.all(
-      extraction.policies.map((pol) =>
-        prisma.policy.create({
-          data: {
-            merchantId: merchant.id,
-            type: pol.type,
-            content: pol.content,
-            sourceEvidence: pol.sourceEvidence,
-            isVerified: false,
-          },
-        })
-      )
-    );
-
-    // Build readiness issues
-    const issuesData: Array<{
-      merchantId: string;
-      severity: string;
-      category: string;
-      title: string;
-      description: string;
-      remediationSuggestion?: string;
-      resolved: boolean;
-    }> = [];
-
-    for (const flag of extraction.consistencyFlags) {
-      issuesData.push({
-        merchantId: merchant.id,
-        severity: 'CRITICAL',
-        category: 'CONSISTENCY',
-        title: 'Price Conflict Detected',
-        description: `${flag.field}: ${flag.explanation} (Detected values: ${flag.detectedValues.join(', ')})`,
-        remediationSuggestion:
-          'Verify active pricing with merchant to resolve discrepancy between sources.',
-        resolved: false,
-      });
-    }
-
-    for (const p of extraction.products) {
-      if (p.price === null) {
-        issuesData.push({
+    // 5. Insert default issues:
+    // 1. Price Conflict Detected on Signature Choco Chip Cookies (WhatsApp ₹250 vs CSV ₹200)
+    // 2. Missing Verified Price on Double Dark Sea Salt Cookies
+    // 3. Unverified Inventory on Double Dark Sea Salt Cookies
+    // 4. Missing Delivery/Refund Policy
+    const createdIssues = await Promise.all([
+      prisma.readinessIssue.create({
+        data: {
+          merchantId: merchant.id,
+          severity: 'CRITICAL',
+          category: 'CONSISTENCY',
+          title: 'Price Conflict Detected',
+          description: 'Price conflict on "Signature Choco Chip Cookies": WhatsApp says ₹250/box while legacy CSV catalog says ₹200.',
+          remediationSuggestion: 'Verify active pricing with merchant to resolve discrepancy between sources.',
+          resolved: false,
+        },
+      }),
+      prisma.readinessIssue.create({
+        data: {
           merchantId: merchant.id,
           severity: 'CRITICAL',
           category: 'PRICE',
           title: 'Missing Verified Price',
-          description: `Product "${p.name}" is missing an explicitly stated price in active catalog.`,
+          description: 'Product "Double Dark Sea Salt Cookies" is missing an explicitly stated price in active catalog.',
           remediationSuggestion: 'Request verified pricing confirmation from merchant.',
           resolved: false,
-        });
-      }
-
-      if (p.inventory === null) {
-        issuesData.push({
+        },
+      }),
+      prisma.readinessIssue.create({
+        data: {
           merchantId: merchant.id,
           severity: 'HIGH',
           category: 'INVENTORY',
-          title: 'Unverified Inventory',
-          description: `Product "${p.name}" has unverified inventory count.`,
-          remediationSuggestion:
-            'Confirm stock availability or enable real-time inventory tracking.',
+          title: 'Confirm Stock: Double Dark Sea Salt Cookies',
+          description: 'Specify how many boxes are ready to bake or pack so AI buyers do not oversell.',
+          remediationSuggestion: 'Confirm stock availability or enable real-time inventory tracking.',
           resolved: false,
-        });
-      }
-    }
+        },
+      }),
+      prisma.readinessIssue.create({
+        data: {
+          merchantId: merchant.id,
+          severity: 'HIGH',
+          category: 'POLICY',
+          title: 'Missing Delivery/Refund Policy',
+          description: 'Merchant has no verified refund or perishable cancellation policy.',
+          remediationSuggestion: 'Adopt standardized perishable goods refund terms.',
+          resolved: false,
+        },
+      }),
+    ]);
 
-    const createdIssues = await Promise.all(
-      issuesData.map((data) => prisma.readinessIssue.create({ data }))
-    );
-
-    // Log Ingestion Audit
+    // 6. Log Ingestion Audit
     await prisma.auditLog.create({
       data: {
         merchantId: merchant.id,
@@ -157,7 +171,7 @@ export async function POST() {
       },
     });
 
-    // 4. Run evaluateMerchantReadiness
+    // 7. Re-run evaluateMerchantReadiness so merchant starts at ~36/100 (NOT_READY)
     const evaluation = await evaluateMerchantReadiness(merchant.id);
 
     return NextResponse.json({

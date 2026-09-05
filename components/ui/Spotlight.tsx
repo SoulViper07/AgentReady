@@ -61,16 +61,16 @@ export const Spotlight: React.FC<SpotlightProps> = ({
   const isConditional = status === 'CONDITIONALLY_READY';
 
   const primaryGlow = isReady
-    ? 'rgba(16, 185, 129, 0.16)' // emerald
+    ? 'rgba(16, 185, 129, 0.16)' // botanical emerald
     : isConditional
-    ? 'rgba(245, 158, 11, 0.14)' // amber
-    : 'rgba(244, 63, 94, 0.14)'; // crimson / rose
+    ? 'rgba(245, 158, 11, 0.14)' // warm amber
+    : 'rgba(244, 63, 94, 0.14)'; // terracotta / rose
 
   const secondaryGlow = isReady
-    ? 'rgba(6, 182, 212, 0.10)' // cyan
+    ? 'rgba(16, 185, 129, 0.05)' // botanical emerald undertone
     : isConditional
-    ? 'rgba(217, 119, 6, 0.08)' // warm amber
-    : 'rgba(71, 85, 105, 0.08)'; // slate
+    ? 'rgba(217, 119, 6, 0.06)' // warm champagne undertone
+    : 'rgba(120, 113, 108, 0.06)'; // warm stone undertone
 
   return (
     <div

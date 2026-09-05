@@ -36,28 +36,28 @@ export const AuthorityTag: React.FC<AuthorityTagProps> = ({
       label: 'AI Extracted (Probabilistic)',
       icon: Sparkles,
       classes:
-        'bg-violet-950/40 border-violet-500/30 text-violet-300 shadow-violet-950/30',
-      dotColor: 'bg-violet-400',
+        'bg-[#23211B] border-amber-500/20 text-amber-200 shadow-sm shadow-black/20',
+      dotColor: 'bg-amber-300',
     },
     HUMAN_VERIFIED: {
       label: 'Merchant Verified Ground Truth',
       icon: UserCheck,
       classes:
-        'bg-sky-950/40 border-sky-500/30 text-sky-300 shadow-sky-950/30',
-      dotColor: 'bg-sky-400',
+        'bg-[#1D2228] border-stone-400/20 text-stone-200 shadow-sm shadow-black/20',
+      dotColor: 'bg-stone-300',
     },
     DETERMINISTIC: {
       label: 'Deterministic Engine (No LLM)',
       icon: Scale,
       classes:
-        'bg-amber-950/40 border-amber-500/30 text-amber-300 shadow-amber-950/30',
+        'bg-amber-500/10 border-amber-500/25 text-amber-300 shadow-sm shadow-black/20',
       dotColor: 'bg-amber-400',
     },
     FINTECH_GATE: {
       label: 'Cryptographic / Razorpay Invariant',
       icon: ShieldCheck,
       classes:
-        'bg-emerald-950/40 border-emerald-500/30 text-emerald-300 shadow-emerald-950/30',
+        'bg-emerald-500/10 border-emerald-500/25 text-emerald-300 shadow-sm shadow-black/20',
       dotColor: 'bg-emerald-400',
     },
   }[type];

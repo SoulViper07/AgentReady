@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { loadEnvConfig } from '@next/env';
+loadEnvConfig(process.cwd());
 import { extractMerchantData } from '../lib/ai/extractor';
 
 async function runTest() {
