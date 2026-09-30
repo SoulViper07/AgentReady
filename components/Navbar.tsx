@@ -67,6 +67,40 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [resetting, setResetting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [currentStatus, setCurrentStatus] = useState<string>(merchantStatus);
+  const [currentScore, setCurrentScore] = useState<number>(merchantScore);
+
+  React.useEffect(() => {
+    setCurrentStatus(merchantStatus);
+  }, [merchantStatus]);
+
+  React.useEffect(() => {
+    setCurrentScore(merchantScore);
+  }, [merchantScore]);
+
+  const fetchLiveStatus = React.useCallback(async () => {
+    try {
+      const res = await fetch('/api/readiness?slug=sweet-crumbs');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.transactionStatus) setCurrentStatus(data.transactionStatus);
+        if (data.readinessScore !== undefined) setCurrentScore(data.readinessScore);
+      }
+    } catch {
+      // Ignore background fetch error
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchLiveStatus();
+    const handleStatusUpdate = () => {
+      fetchLiveStatus();
+    };
+    window.addEventListener('agentready:status-update', handleStatusUpdate);
+    return () => {
+      window.removeEventListener('agentready:status-update', handleStatusUpdate);
+    };
+  }, [fetchLiveStatus, pathname]);
 
   const handleReset = async () => {
     if (resetting) return;
@@ -78,6 +112,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       if (onReset) {
         await onReset();
       }
+      window.dispatchEvent(new CustomEvent('agentready:reset'));
+      await fetchLiveStatus();
       router.refresh();
 
       setToastMessage('Demo state reset to unverified');
@@ -92,10 +128,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const handleRefresh = async () => {
-    if (refreshing || !onRefresh) return;
+    if (refreshing) return;
     setRefreshing(true);
     try {
-      await onRefresh();
+      if (onRefresh) {
+        await onRefresh();
+      }
+      await fetchLiveStatus();
     } catch (err) {
       console.error('Refresh error:', err);
     } finally {
@@ -181,20 +220,20 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Compact Status Pill with Slow Rhythmic Breathe Animation */}
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-[11px] font-mono shadow-sm">
-            {merchantStatus === 'READY' ? (
+            {currentStatus === 'READY' ? (
               <span className="text-emerald-400 font-bold flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-breathe" />
                 <span>READY</span>
-                {merchantScore !== undefined && (
-                  <span className="text-emerald-400/70 font-normal font-mono">({merchantScore})</span>
+                {currentScore !== undefined && (
+                  <span className="text-emerald-400/70 font-normal font-mono">({currentScore})</span>
                 )}
               </span>
             ) : (
               <span className="text-rose-400 font-bold flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-breathe" />
-                <span>{merchantStatus === 'NOT_READY' ? 'NOT READY' : merchantStatus}</span>
-                {merchantScore !== undefined && (
-                  <span className="text-rose-400/70 font-normal font-mono">({merchantScore})</span>
+                <span>{currentStatus === 'NOT_READY' ? 'NOT READY' : currentStatus}</span>
+                {currentScore !== undefined && (
+                  <span className="text-rose-400/70 font-normal font-mono">({currentScore})</span>
                 )}
               </span>
             )}
@@ -262,3 +301,5 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+
+export default Navbar;

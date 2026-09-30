@@ -35,7 +35,6 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Navbar } from '../../components/Navbar';
 import { AuthorityTag } from '../../components/AuthorityTag';
 import { Spotlight } from '../../components/ui/Spotlight';
 import { TiltCard } from '../../components/ui/TiltCard';
@@ -378,6 +377,22 @@ export default function AgentDemoPage() {
       },
     ];
   }, [catalogProducts]);
+
+  useEffect(() => {
+    const handleReset = async () => {
+      await fetchMerchantStatus();
+      await fetchRecentProposals();
+      await fetchCatalogProducts();
+      setProposal(null);
+      setActiveResponse(null);
+      setVerifiedReceipt(null);
+      setCheckoutOrderData(null);
+      setGateBlockedReason(null);
+      setGateBlockedInfo(null);
+    };
+    window.addEventListener('agentready:reset', handleReset);
+    return () => window.removeEventListener('agentready:reset', handleReset);
+  }, [fetchMerchantStatus, fetchRecentProposals, fetchCatalogProducts]);
 
   // Expiry Countdown Timer
   useEffect(() => {
@@ -754,45 +769,23 @@ export default function AgentDemoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0E0F12] text-stone-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-200 flex flex-col">
+    <div className="min-h-[calc(100dvh-4rem)] flex-1 bg-[#0E0F12] text-stone-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-200 flex flex-col">
       {/* Razorpay Checkout Script */}
       <Script
         src="https://checkout.razorpay.com/v1/checkout.js"
         strategy="lazyOnload"
       />
 
-      {/* Top Navbar */}
-      <Navbar
-        merchantStatus={merchantStatus}
-        merchantScore={merchantScore}
-        onReset={async () => {
-          await fetchMerchantStatus();
-          await fetchRecentProposals();
-          await fetchCatalogProducts();
-          setProposal(null);
-          setActiveResponse(null);
-          setVerifiedReceipt(null);
-          setCheckoutOrderData(null);
-          setGateBlockedReason(null);
-          setGateBlockedInfo(null);
-        }}
-        onRefresh={async () => {
-          await fetchMerchantStatus();
-          await fetchRecentProposals();
-          await fetchCatalogProducts();
-        }}
-      />
-
       {/* Readiness Alert Banner if NOT_READY */}
       {merchantStatus === 'NOT_READY' && (
-        <div className="bg-gradient-to-r from-amber-500/10 via-amber-950/20 to-[#0E0F12] border-b border-amber-500/20 px-6 py-2.5 flex items-center justify-between text-xs text-amber-300">
+        <div className="bg-gradient-to-r from-amber-500/10 via-amber-950/20 to-[#0E0F12] border-b border-amber-500/20 px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-300">
           <div className="flex items-center gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
             <span>
               <strong>Readiness Invariant Notice:</strong> Demo merchant &ldquo;Sweet Crumbs&rdquo; is currently in <code>NOT_READY</code> state (score: {merchantScore}/100). The agent-readable catalog will strictly filter out unverified items until gates pass.
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleQuickVerify}
               disabled={quickVerifying}
@@ -812,7 +805,7 @@ export default function AgentDemoPage() {
       )}
 
       {/* Dual-View Mode Switcher Banner (iOS Segmented Pill Control) */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-6 pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs text-stone-400">
           <span className="font-semibold text-stone-200">Active View:</span>
           <span className="text-stone-400 hidden xs:inline">
@@ -852,7 +845,7 @@ export default function AgentDemoPage() {
       </div>
 
       {/* Main Two-Column Playground */}
-      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Autonomous Buyer Terminal (6 Cols) */}
         <section className="lg:col-span-6 flex flex-col gap-5">
           <div>
@@ -1203,7 +1196,7 @@ export default function AgentDemoPage() {
                     </p>
 
                     {gateBlockedInfo && (
-                      <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-[#121316]/50 border border-white/[0.04] text-[11px] font-mono text-stone-300">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 rounded-lg bg-[#121316]/50 border border-white/[0.04] text-[11px] font-mono text-stone-300">
                         <div>
                           <span className="text-stone-500 block text-[10px] uppercase">Requested:</span>
                           <span className="text-white font-bold">{gateBlockedInfo.requestedQuantity} boxes</span>
@@ -1271,7 +1264,7 @@ export default function AgentDemoPage() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#181A20] border border-white/[0.06] text-xs font-mono">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#181A20] border border-white/[0.06] text-xs font-mono">
                       <div>
                         <span className="text-stone-400 block text-[10px] uppercase">RAZORPAY PAYMENT ID</span>
                         <span className="text-white font-bold truncate block">{verifiedReceipt.paymentId}</span>
@@ -1372,7 +1365,7 @@ export default function AgentDemoPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-white/[0.06] text-xs font-mono">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2.5 border-t border-white/[0.06] text-xs font-mono">
                     <div>
                       <span className="text-stone-400 block text-[10px] uppercase">Requested Units:</span>
                       <span className="text-sm font-bold text-white">
@@ -1666,7 +1659,7 @@ export default function AgentDemoPage() {
 
                           {/* Simulation buttons */}
                           {checkoutOrderData.testSignature && (
-                            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/[0.06]">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-white/[0.06]">
                               <button
                                 type="button"
                                 disabled={gateLoading}
@@ -1723,9 +1716,11 @@ export default function AgentDemoPage() {
                   </button>
 
                   {showJson && (
-                    <pre className="p-3 rounded-xl bg-[#121316] border border-white/[0.08] text-[10px] text-stone-300 font-mono overflow-x-auto max-h-60">
-                      {JSON.stringify(proposal, null, 2)}
-                    </pre>
+                    <div className="w-full overflow-x-auto no-scrollbar">
+                      <pre className="p-3 rounded-xl bg-[#121316] border border-white/[0.08] text-[10px] text-stone-300 font-mono max-h-60">
+                        {JSON.stringify(proposal, null, 2)}
+                      </pre>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1852,18 +1847,18 @@ export default function AgentDemoPage() {
                     className="overflow-hidden flex flex-col gap-3"
                   >
                     {/* AI Runtime & Invariant Metric Strip */}
-                    <div className="grid grid-cols-3 gap-2 px-3.5 py-2.5 rounded-xl bg-[#141519] border border-white/[0.08] text-[11px] font-mono text-stone-400 shadow-inner">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 px-3.5 py-2.5 rounded-xl bg-[#141519] border border-white/[0.08] text-[11px] font-mono text-stone-400 shadow-inner">
                       <div className="flex items-center gap-1.5">
                         <Cpu className="w-3.5 h-3.5 text-amber-400" />
                         <span className="text-stone-500">Model:</span>
                         <span className="text-stone-200 font-semibold truncate">Groq Llama 3.3 70B</span>
                       </div>
-                      <div className="flex items-center gap-1.5 justify-center">
+                      <div className="flex items-center gap-1.5 justify-start sm:justify-center">
                         <Clock className="w-3.5 h-3.5 text-amber-300" />
                         <span className="text-stone-500">Tool Latency:</span>
                         <span className="text-amber-300 font-semibold">~340ms</span>
                       </div>
-                      <div className="flex items-center gap-1.5 justify-end">
+                      <div className="flex items-center gap-1.5 justify-start sm:justify-end">
                         <Scale className="w-3.5 h-3.5 text-emerald-400" />
                         <span className="text-stone-500">Temp:</span>
                         <span className="text-emerald-300 font-semibold">0.0 (Strict Invariants)</span>
@@ -1960,15 +1955,19 @@ export default function AgentDemoPage() {
                                   <div className="p-3 text-[11px] flex flex-col gap-2 bg-black/40 border-t border-white/[0.04]">
                                     <div>
                                       <span className="text-stone-400">Arguments:</span>
-                                      <pre className="mt-1 p-2 rounded bg-[#121316] text-stone-300 text-[10px] overflow-x-auto border border-white/[0.04]">
-                                        {JSON.stringify(tc.args, null, 2)}
-                                      </pre>
+                                      <div className="w-full overflow-x-auto no-scrollbar">
+                                        <pre className="mt-1 p-2 rounded bg-[#121316] text-stone-300 text-[10px] border border-white/[0.04]">
+                                          {JSON.stringify(tc.args, null, 2)}
+                                        </pre>
+                                      </div>
                                     </div>
                                     <div>
                                       <span className="text-stone-400">Result:</span>
-                                      <pre className="mt-1 p-2 rounded bg-[#121316] text-emerald-400 text-[10px] overflow-x-auto border border-white/[0.04]">
-                                        {JSON.stringify(tc.result, null, 2)}
-                                      </pre>
+                                      <div className="w-full overflow-x-auto no-scrollbar">
+                                        <pre className="mt-1 p-2 rounded bg-[#121316] text-emerald-400 text-[10px] border border-white/[0.04]">
+                                          {JSON.stringify(tc.result, null, 2)}
+                                        </pre>
+                                      </div>
                                     </div>
                                   </div>
                                 )}

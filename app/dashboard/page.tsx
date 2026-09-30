@@ -27,7 +27,6 @@ import {
 } from 'lucide-react';
 import { IssueCard } from '../../components/IssueCard';
 import { AuditFeed } from '../../components/AuditFeed';
-import { Navbar } from '../../components/Navbar';
 import { AuthorityTag } from '../../components/AuthorityTag';
 import { PipelineRail } from '../../components/PipelineRail';
 import { motion, useSpring } from 'framer-motion';
@@ -205,11 +204,20 @@ export default function DashboardPage() {
       setProducts(data.products || []);
       setPolicies(data.policies || []);
       setIssues(data.issues || []);
+      window.dispatchEvent(new CustomEvent('agentready:status-update'));
     } catch (err: unknown) {
       console.error(err);
       setStatusMessage('Error loading readiness data');
     }
   }, []);
+
+  useEffect(() => {
+    const handleReset = () => {
+      fetchReadiness();
+    };
+    window.addEventListener('agentready:reset', handleReset);
+    return () => window.removeEventListener('agentready:reset', handleReset);
+  }, [fetchReadiness]);
 
   useEffect(() => {
     let isMounted = true;
@@ -417,7 +425,7 @@ export default function DashboardPage() {
 
   if (loading && !merchant) {
     return (
-      <div className="min-h-screen bg-[#0E0F12] text-stone-100 flex items-center justify-center font-sans">
+      <div className="min-h-[calc(100dvh-4rem)] flex-1 bg-[#0E0F12] text-stone-100 flex items-center justify-center font-sans">
         <div className="flex items-center gap-3 text-stone-400">
           <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
           <span>Loading Merchant Readiness Engine...</span>
@@ -427,18 +435,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0E0F12] text-stone-100 font-sans selection:bg-amber-500/30 selection:text-amber-200">
-      {/* Top Navbar */}
-      <Navbar
-        merchantStatus={merchant?.transactionStatus}
-        merchantScore={merchant?.readinessScore}
-        onReset={fetchReadiness}
-        onRefresh={fetchReadiness}
-        statusMessage={statusMessage}
-      />
-
+    <div className="min-h-[calc(100dvh-4rem)] flex-1 bg-[#0E0F12] text-stone-100 font-sans selection:bg-amber-500/30 selection:text-amber-200 flex flex-col">
       {/* Main Responsive Container */}
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 flex flex-col gap-6 sm:gap-8">
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8 flex-1">
         {/* Top Hero & Readiness Header */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#181A20] via-[#141519] to-[#0E0F12] border border-white/[0.08] p-5 sm:p-7 shadow-2xl shadow-black/30 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <Spotlight status={merchant?.transactionStatus || 'NOT_READY'} />
@@ -1425,7 +1424,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="w-full overflow-x-auto no-scrollbar">
                 <table className="w-full text-left text-xs text-stone-300">
                   <thead className="bg-[#121316] text-stone-400 font-mono uppercase tracking-wider border-b border-white/[0.08]">
                     <tr>

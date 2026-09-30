@@ -24,7 +24,6 @@ import {
   ShieldAlert,
   Zap,
 } from 'lucide-react';
-import { Navbar } from '../../components/Navbar';
 import { AuthorityTag } from '../../components/AuthorityTag';
 import { TiltCard } from '../../components/ui/TiltCard';
 import { IngestProgressBar } from '../../components/IngestProgressBar';
@@ -361,6 +360,7 @@ export default function IngestionStudioPage() {
       setStageText(`Extraction complete! ${count} items loaded into verification queue.`);
 
       setCommitSuccess(true);
+      window.dispatchEvent(new CustomEvent('agentready:status-update'));
       setTimeout(() => {
         router.push('/dashboard');
       }, 1200);
@@ -381,12 +381,10 @@ export default function IngestionStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0E0F12] text-stone-100 font-sans selection:bg-amber-500/30 selection:text-amber-200 flex flex-col">
-      <Navbar subtitle="Multimodal Ingestion Studio & Vision OCR" />
-
+    <div className="min-h-[calc(100dvh-4rem)] flex-1 bg-[#0E0F12] text-stone-100 font-sans selection:bg-amber-500/30 selection:text-amber-200 flex flex-col">
       {/* Hero Strip */}
-      <div className="border-b border-white/[0.06] bg-gradient-to-b from-[#181A20] via-[#141519] to-[#0E0F12] px-4 sm:px-6 py-6 sm:py-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="border-b border-white/[0.06] bg-gradient-to-b from-[#181A20] via-[#141519] to-[#0E0F12] py-6 sm:py-8">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
@@ -421,7 +419,7 @@ export default function IngestionStudioPage() {
       </div>
 
       {/* Main Studio Workspace */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* ======================================================== */}
           {/* LEFT COLUMN: SOURCE INPUT METHODS (Tabs & Controls) (5 Cols) */}

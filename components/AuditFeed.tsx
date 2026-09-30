@@ -210,9 +210,11 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
             </button>
           </div>
           {isExpanded ? (
-            <pre className="p-2.5 rounded-xl bg-[#121316] border border-white/[0.08] text-stone-300 text-[10px] font-mono overflow-x-auto max-h-48 leading-relaxed">
-              {JSON.stringify(parsed, null, 2)}
-            </pre>
+            <div className="w-full overflow-x-auto no-scrollbar">
+              <pre className="p-2.5 rounded-xl bg-[#121316] border border-white/[0.08] text-stone-300 text-[10px] font-mono max-h-48 leading-relaxed">
+                {JSON.stringify(parsed, null, 2)}
+              </pre>
+            </div>
           ) : (
             <span className="text-xs font-mono text-stone-400 truncate block max-w-full">
               {details.slice(0, 120)}...

@@ -20,12 +20,12 @@ function Github({ className = "w-3.5 h-3.5" }: { className?: string }) {
 
 export default function Footer() {
   return (
-    <footer className="mt-auto border-t border-white/[0.06] bg-[#0E0F12]/80 backdrop-blur-md text-stone-400 text-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+    <footer className="w-full mt-auto border-t border-white/[0.06] bg-[#0E0F12]/95 backdrop-blur-md text-stone-400 text-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           
-          {/* Column 1: Brand & Hackathon Scope */}
-          <div className="md:col-span-2 space-y-3">
+          {/* Column 1: Platform Scope */}
+          <div className="sm:col-span-2 space-y-3">
             <div className="flex items-center gap-2 text-stone-100 font-semibold text-sm tracking-tight">
               <span className="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
                 <ShieldCheck className="w-3.5 h-3.5"/>
@@ -46,7 +46,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Column 2: Navigation Rails */}
+          {/* Column 2: Platform Rails */}
           <div className="space-y-2.5">
             <h4 className="text-stone-200 font-medium text-xs uppercase tracking-wider font-mono">
               Platform Rails
@@ -75,33 +75,33 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 3: Standards & Protocol Specs */}
+          {/* Column 3: Protocols */}
           <div className="space-y-2.5">
             <h4 className="text-stone-200 font-medium text-xs uppercase tracking-wider font-mono">
-              Standards
+              Protocols & Standards
             </h4>
             <ul className="space-y-1.5 text-stone-400">
               <li className="flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-stone-500"/>
-                NPCI Unified Agent Protocol (UAP)
+                <Cpu className="w-3.5 h-3.5 text-stone-500 shrink-0"/>
+                <span>NPCI Unified Agent Protocol</span>
               </li>
               <li className="flex items-center gap-1.5">
-                <Terminal className="w-3.5 h-3.5 text-stone-500"/>
-                HMAC SHA-256 Settlement
+                <Terminal className="w-3.5 h-3.5 text-stone-500 shrink-0"/>
+                <span>HMAC SHA-256 Settlement</span>
               </li>
               <li className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-stone-500"/>
-                Deterministic Financial Gate
+                <ShieldCheck className="w-3.5 h-3.5 text-stone-500 shrink-0"/>
+                <span>Deterministic Financial Gate</span>
               </li>
             </ul>
           </div>
 
         </div>
 
-        {/* Bottom Bar: Copyright & Authorship */}
-        <div className="pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-center sm:text-left">
-            <span>© 2026 AgentReady. Deterministic Financial Rails.</span>
+        {/* Bottom Bar */}
+        <div className="pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-2 gap-y-1">
+            <span>© 2026 AgentReady.</span>
             <span className="hidden sm:inline text-stone-600">•</span>
             <span>
               Engineered by{" "}
@@ -116,20 +116,17 @@ export default function Footer() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <a
-              href="https://github.com/SoulViper07/AgentReady"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-stone-300 hover:text-white hover:border-white/20 transition-all active:scale-[0.97]"
-            >
-              <Github className="w-3.5 h-3.5"/>
-              <span>Source Code</span>
-              <ExternalLink className="w-3 h-3 text-stone-500"/>
-            </a>
-          </div>
+          <a
+            href="https://github.com/SoulViper07/AgentReady"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-stone-300 hover:text-white hover:border-white/20 transition-all active:scale-[0.97]"
+          >
+            <Github className="w-3.5 h-3.5"/>
+            <span>Source Code</span>
+            <ExternalLink className="w-3 h-3 text-stone-500"/>
+          </a>
         </div>
-
       </div>
     </footer>
   );
