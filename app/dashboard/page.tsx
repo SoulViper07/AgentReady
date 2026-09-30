@@ -625,8 +625,8 @@ export default function DashboardPage() {
               {/* Section Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-bold text-[#F8F9FA] flex items-center gap-2.5">
-                    <ShoppingBag className="w-5 h-5 text-emerald-400" />
+                  <h2 className="text-lg sm:text-xl font-bold text-[#F8F9FA] flex items-center gap-2.5">
+                    <ShoppingBag className="w-5 h-5 text-emerald-400 shrink-0" />
                     Resolve to Sell
                   </h2>
                   <p className="text-xs text-stone-400 mt-0.5">
@@ -645,7 +645,7 @@ export default function DashboardPage() {
                       {quickVerifying ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-200" />
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
                       )}
                       <span>Quick Verify All (Demo)</span>
                     </button>
@@ -700,11 +700,11 @@ export default function DashboardPage() {
             {/* Right / Secondary Column: Live Catalog Snapshot & Logistics (5 or 4 Cols) */}
             <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
               {/* Live Catalog Snapshot Card (Stripe / Shopify Commerce Polish) */}
-              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
+              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
                 <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                      <Store className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                      <Store className="w-4 h-4 shrink-0" />
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-[#F8F9FA]">
@@ -719,7 +719,7 @@ export default function DashboardPage() {
                     href="/ingest"
                     className="min-h-[30px] px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
                   >
-                    <UploadCloud className="w-3.5 h-3.5" />
+                    <UploadCloud className="w-3.5 h-3.5 shrink-0" />
                     <span>+ Ingest Studio</span>
                   </Link>
                 </div>
@@ -812,9 +812,9 @@ export default function DashboardPage() {
               </div>
 
               {/* Logistics & Operations Card */}
-              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
+              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-white/[0.08]">
-                  <Truck className="w-4 h-4 text-amber-400" />
+                  <Truck className="w-4 h-4 text-amber-400 shrink-0" />
                   <h3 className="text-sm font-semibold text-[#F8F9FA]">
                     Logistics &amp; Fulfillment
                   </h3>
@@ -849,9 +849,9 @@ export default function DashboardPage() {
               </div>
 
               {/* AI Buyer Simulator CTA */}
-              <div className="rounded-2xl bg-gradient-to-br from-[#181A20] via-[#141519] to-[#0E0F12] border border-amber-500/25 p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-3">
+              <div className="rounded-2xl bg-gradient-to-br from-[#181A20] via-[#141519] to-[#0E0F12] border border-amber-500/25 p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-3">
                 <div className="flex items-center gap-2 text-amber-300 font-semibold text-sm">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>Test Store with AI Buyers</span>
                 </div>
                 <p className="text-xs text-stone-300 leading-relaxed">
@@ -863,7 +863,7 @@ export default function DashboardPage() {
                   className="w-full mt-1 min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/40 cursor-pointer"
                 >
                   <span>Launch AI Buyer Playground</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                 </Link>
               </div>
             </div>
@@ -872,11 +872,11 @@ export default function DashboardPage() {
 
         {/* Collapsible Immutable Audit Ledger in Merchant View */}
         {viewMode === 'merchant' && (
-          <div id="audit-ledger" className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
+          <div id="audit-ledger" className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
             <span id="ledger" className="block -mt-24 pt-24" />
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2.5">
-                <History className="w-4 h-4 text-stone-400" />
+                <History className="w-4 h-4 text-stone-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-semibold text-[#F8F9FA]">
                     Immutable System Audit Ledger
@@ -931,7 +931,7 @@ export default function DashboardPage() {
             {/* Technical Readiness Overview Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Score Card: 4 Cols */}
-              <div className="lg:col-span-4 rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-6 flex flex-col justify-between shadow-xl shadow-black/20">
+              <div className="lg:col-span-4 rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 flex flex-col justify-between shadow-xl shadow-black/20">
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold uppercase tracking-wider text-stone-400">
@@ -1037,23 +1037,28 @@ export default function DashboardPage() {
                   {invariants &&
                     !invariants.passed &&
                     invariants.failures.length > 0 && (
-                      <div className="mt-3 p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-300 flex flex-col gap-1">
-                        <span className="font-semibold text-rose-400 flex items-center gap-1.5">
-                          <ShieldAlert className="w-3.5 h-3.5" />
-                          Blocking Invariants ({invariants.failures.length}):
-                        </span>
-                        {invariants.failures.map((f, i) => (
-                          <span key={i} className="leading-snug text-rose-300/80">
-                            • {f}
+                      <details className="group mt-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-300 overflow-hidden">
+                        <summary className="p-2.5 font-semibold text-rose-400 flex items-center justify-between cursor-pointer select-none hover:bg-rose-500/10 transition-colors">
+                          <span className="flex items-center gap-1.5">
+                            <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                            <span>⚙️ View Blocking Invariants ({invariants.failures.length})</span>
                           </span>
-                        ))}
-                      </div>
+                          <span className="text-[10px] text-rose-400/80 group-open:rotate-180 transition-transform">▾</span>
+                        </summary>
+                        <div className="px-2.5 pb-2.5 flex flex-col gap-1 border-t border-rose-500/20 pt-1.5">
+                          {invariants.failures.map((f, i) => (
+                            <span key={i} className="leading-snug text-rose-300/80 font-mono text-[10px]">
+                              • {f}
+                            </span>
+                          ))}
+                        </div>
+                      </details>
                     )}
                 </div>
               </div>
 
               {/* Category Breakdown Bars: 8 Cols */}
-              <div className="lg:col-span-8 rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-6 shadow-xl shadow-black/20 flex flex-col justify-between">
+              <div className="lg:col-span-8 rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                     <div>
@@ -1260,11 +1265,11 @@ export default function DashboardPage() {
             </div>
 
             {/* Operational Policies Quick Verification Bar */}
-            <section className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-6 flex flex-col gap-4 shadow-xl shadow-black/20">
+            <section className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 flex flex-col gap-4 shadow-xl shadow-black/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-semibold text-[#F8F9FA] flex items-center gap-2">
-                    <FileCheck2 className="w-5 h-5 text-amber-400" />
+                  <h2 className="text-base sm:text-lg font-semibold text-[#F8F9FA] flex items-center gap-2">
+                    <FileCheck2 className="w-5 h-5 text-amber-400 shrink-0" />
                     Operational Policies &amp; Legal Disclaimers
                   </h2>
                   <p className="text-xs text-stone-400 mt-0.5">
@@ -1286,12 +1291,12 @@ export default function DashboardPage() {
                       </span>
                       {pol.isVerified ? (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                           Verified
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                          <AlertTriangle className="w-3.5 h-3.5" />
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                           Draft / Unverified
                         </span>
                       )}
@@ -1329,8 +1334,8 @@ export default function DashboardPage() {
             <section className="flex flex-col gap-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-[#F8F9FA] flex items-center gap-2.5">
-                    <AlertTriangle className="w-5 h-5 text-amber-400" />
+                  <h2 className="text-lg sm:text-xl font-bold text-[#F8F9FA] flex items-center gap-2.5">
+                    <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
                     Actionable Remediation Feed (AST Provenance)
                   </h2>
                   <p className="text-xs text-stone-400 mt-0.5">
@@ -1437,12 +1442,12 @@ export default function DashboardPage() {
             </section>
 
             {/* Live Catalog Table (Raw Inspector View) */}
-            <section className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-6 flex flex-col gap-4 shadow-xl shadow-black/20">
+            <section className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 flex flex-col gap-4 shadow-xl shadow-black/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-semibold text-[#F8F9FA] flex items-center gap-2">
-                    <Store className="w-5 h-5 text-emerald-400" />
-                    Live Merchant Products Catalog Table
+                  <h2 className="text-base sm:text-lg font-semibold text-[#F8F9FA] flex items-center gap-2">
+                    <Store className="w-5 h-5 text-emerald-400 shrink-0" />
+                    Live Merchant Products Catalog
                   </h2>
                   <p className="text-xs text-stone-400 mt-0.5">
                     Current catalog records reflecting real-time human
@@ -1451,7 +1456,75 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="w-full overflow-x-auto no-scrollbar">
+              {/* Mobile & Tablet Card Grid (Task 3: Mobile Grid Overhaul) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:hidden gap-3">
+                {products.map((p) => {
+                  const isVerified = p.priceVerified && p.inventoryVerified;
+                  return (
+                    <div
+                      key={`card-${p.id}`}
+                      className="p-3.5 rounded-xl bg-[#121316] border border-white/[0.06] flex flex-col justify-between gap-3 text-xs"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-semibold text-stone-100 flex items-center gap-1.5 flex-wrap">
+                            <span>{p.name}</span>
+                            {p.isEggless && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                                Eggless
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 font-mono text-[11px] text-stone-400 flex-wrap">
+                            <span>Price: <strong className="text-stone-200">{p.price !== null ? `₹${p.price}` : 'null'}</strong></span>
+                            <span>•</span>
+                            <span>Stock: <strong className="text-amber-300">{p.inventory !== null ? `${p.inventory}` : 'null'}</strong></span>
+                          </div>
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono shrink-0 ${
+                            p.status === 'VERIFIED'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : 'bg-[#181A20] text-stone-400 border border-white/[0.06]'
+                          }`}
+                        >
+                          {p.status}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
+                        <span className="text-[11px] text-stone-400">
+                          {isVerified ? '✓ Fully Verified' : 'Action Required'}
+                        </span>
+                        {p.status !== 'VERIFIED' ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleResolveAction({
+                                action: 'VERIFY_PRODUCT',
+                                productId: p.id,
+                                price: p.price ?? 200,
+                                inventory: p.inventory ?? 10,
+                              })
+                            }
+                            disabled={actionLoading}
+                            className="px-2.5 py-1 rounded bg-[#181A20] hover:bg-emerald-600 hover:text-white text-stone-300 text-[11px] font-medium border border-white/[0.08] transition-all disabled:opacity-50 cursor-pointer"
+                          >
+                            Verify Product
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-stone-400 font-mono">
+                            Locked
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop / Tablet Landscape Table */}
+              <div className="hidden md:block w-full overflow-x-auto no-scrollbar">
                 <table className="w-full text-left text-xs text-stone-300">
                   <thead className="bg-[#121316] text-stone-400 font-mono uppercase tracking-wider border-b border-white/[0.08]">
                     <tr>
@@ -1488,7 +1561,7 @@ export default function DashboardPage() {
                         <td className="py-3 px-4">
                           {p.priceVerified ? (
                             <span className="inline-flex items-center gap-1 text-emerald-400">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Yes
+                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Yes
                             </span>
                           ) : (
                             <span className="text-stone-400">No</span>
@@ -1504,7 +1577,7 @@ export default function DashboardPage() {
                         <td className="py-3 px-4">
                           {p.inventoryVerified ? (
                             <span className="inline-flex items-center gap-1 text-emerald-400">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Yes
+                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Yes
                             </span>
                           ) : (
                             <span className="text-stone-400">No</span>

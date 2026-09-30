@@ -850,8 +850,8 @@ export default function AgentDemoPage() {
         <section className="lg:col-span-6 flex flex-col gap-5">
           <div>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[#F8F9FA] flex items-center gap-2">
-                <Bot className="w-5 h-5 text-amber-400" />
+              <h2 className="text-lg sm:text-xl font-bold text-[#F8F9FA] flex items-center gap-2">
+                <Bot className="w-5 h-5 text-amber-400 shrink-0" />
                 Autonomous Buyer Client
               </h2>
               <AuthorityTag
@@ -1130,7 +1130,7 @@ export default function AgentDemoPage() {
           {/* Active Proposal Card (Stripe/Apple-Grade Modern Digital Checkout) */}
           {proposal ? (
             <TiltCard className="rounded-2xl">
-              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-6 flex flex-col gap-5 shadow-xl shadow-black/20">
+              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 flex flex-col gap-5 shadow-xl shadow-black/20">
                 {/* 1. Merchant Badge & Security Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
                   <div className="flex items-center gap-3">
@@ -1145,7 +1145,7 @@ export default function AgentDemoPage() {
                             'Sweet Crumbs'}
                         </h3>
                         <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                          <Lock className="w-2.5 h-2.5 text-emerald-400" />
+                          <Lock className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
                           <span>End-to-End Encrypted</span>
                         </span>
                       </div>
@@ -1155,13 +1155,13 @@ export default function AgentDemoPage() {
                         <button
                           type="button"
                           onClick={() => copyProposalId(proposal.id)}
-                          className="flex items-center gap-1 text-stone-400 hover:text-white transition-colors"
+                          className="flex items-center gap-1 text-stone-400 hover:text-white transition-colors cursor-pointer"
                         >
-                          <span className="truncate max-w-[140px]">{proposal.id}</span>
+                          <span className="truncate max-w-[110px] sm:max-w-[180px] break-all">{proposal.id}</span>
                           {copiedId ? (
-                            <Check className="w-3 h-3 text-emerald-400" />
+                            <Check className="w-3 h-3 text-emerald-400 shrink-0" />
                           ) : (
-                            <Copy className="w-3 h-3 text-stone-500" />
+                            <Copy className="w-3 h-3 text-stone-500 shrink-0" />
                           )}
                         </button>
                       </div>
@@ -1170,7 +1170,7 @@ export default function AgentDemoPage() {
 
                   {/* Expiry Countdown Timer */}
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121316] border border-white/[0.08] text-xs font-mono text-amber-300 shadow-sm shrink-0">
-                    <Clock className="w-3.5 h-3.5 text-amber-400" />
+                    <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                     <span>Expires in {countdown}</span>
                   </div>
                 </div>
@@ -1246,17 +1246,17 @@ export default function AgentDemoPage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    className="p-5 rounded-2xl bg-[#141519] border-2 border-emerald-500/60 text-stone-100 flex flex-col gap-4 shadow-2xl shadow-emerald-950/30 animate-emerald-ripple"
+                    className="p-4 sm:p-5 rounded-2xl bg-[#141519] border-2 border-emerald-500/60 text-stone-100 flex flex-col gap-4 shadow-2xl shadow-emerald-950/30 animate-emerald-ripple"
                   >
-                    <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+                    <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] flex-wrap gap-2">
                       <div className="flex items-center gap-2.5 text-emerald-400 font-semibold text-sm">
                         <motion.div
                           initial={{ scale: 0.7, opacity: 0 }}
                           animate={{ scale: [0.7, 1.15, 1], opacity: 1 }}
                           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                          className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shadow-sm"
+                          className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shadow-sm shrink-0"
                         >
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                         </motion.div>
                         <span>Payment Verified &amp; Inventory Settled</span>
                       </div>
@@ -1271,11 +1271,11 @@ export default function AgentDemoPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#181A20] border border-white/[0.06] text-xs font-mono">
                       <div>
                         <span className="text-stone-400 block text-[10px] uppercase">RAZORPAY PAYMENT ID</span>
-                        <span className="text-white font-bold truncate block">{verifiedReceipt.paymentId}</span>
+                        <span className="text-white font-bold truncate block break-all">{verifiedReceipt.paymentId}</span>
                       </div>
                       <div>
                         <span className="text-stone-400 block text-[10px] uppercase">RAZORPAY ORDER ID</span>
-                        <span className="text-white font-bold truncate block">{verifiedReceipt.orderId}</span>
+                        <span className="text-white font-bold truncate block break-all">{verifiedReceipt.orderId}</span>
                       </div>
                       <div className="pt-2 border-t border-white/[0.06]">
                         <span className="text-stone-400 block text-[10px] uppercase">SETTLEMENT AMOUNT</span>
@@ -1287,33 +1287,38 @@ export default function AgentDemoPage() {
                       </div>
                     </div>
 
-                    {/* Cryptographic Proof Box */}
-                    <div className="p-3 rounded-xl bg-[#121316] border border-emerald-500/30 flex flex-col gap-1.5 font-mono text-[11px]">
-                      <div className="flex items-center justify-between text-emerald-400 font-semibold text-[10px]">
+                    {/* Cryptographic Proof Box (Progressive Disclosure - Collapsed by Default) */}
+                    <details className="group rounded-xl bg-[#121316] border border-emerald-500/30 overflow-hidden font-mono text-[11px]">
+                      <summary className="p-3 cursor-pointer select-none flex items-center justify-between text-emerald-400 font-semibold text-[10px] hover:bg-emerald-500/5 transition-colors">
                         <span className="flex items-center gap-1.5">
-                          <Hash className="w-3 h-3" />
-                          CRYPTOGRAPHIC VERIFICATION PROOF (HMAC SHA-256)
+                          <Hash className="w-3 h-3 shrink-0" />
+                          <span>⚙️ View Cryptographic Proof (HMAC SHA-256)</span>
                         </span>
-                        <span>100% BIT-PERFECT MATCH</span>
-                      </div>
-                      <div className="text-[10px] text-stone-400">
-                        <span>Payload: </span>
-                        <span className="text-stone-300 break-all select-all">{verifiedReceipt.orderId}|{verifiedReceipt.paymentId}</span>
-                      </div>
-                      {verifiedReceipt.calculatedHmac && (
-                        <div className="text-[10px] text-stone-400">
-                          <span>Digest: </span>
-                          <span className="text-emerald-400/90 break-all select-all font-mono">{verifiedReceipt.calculatedHmac}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">100% Bit-Perfect</span>
+                          <span className="text-[10px] text-emerald-400/80 group-open:rotate-180 transition-transform">▾</span>
                         </div>
-                      )}
-                      <div className="flex items-center justify-between pt-1 border-t border-white/[0.06] text-[10px] text-stone-400">
-                        <span className="flex items-center gap-1 text-emerald-300">
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          Zero-Bit Collision • Verified via RAZORPAY_KEY_SECRET
-                        </span>
-                        <span className="font-semibold text-emerald-400">STATE: ATOMICALLY_SETTLED</span>
+                      </summary>
+                      <div className="px-3 pb-3 pt-1 flex flex-col gap-1.5 border-t border-white/[0.04]">
+                        <div className="text-[10px] text-stone-400">
+                          <span>Payload: </span>
+                          <span className="text-stone-300 break-all select-all">{verifiedReceipt.orderId}|{verifiedReceipt.paymentId}</span>
+                        </div>
+                        {verifiedReceipt.calculatedHmac && (
+                          <div className="text-[10px] text-stone-400">
+                            <span>Digest: </span>
+                            <span className="text-emerald-400/90 break-all select-all font-mono">{verifiedReceipt.calculatedHmac}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between pt-1 border-t border-white/[0.06] text-[10px] text-stone-400 flex-wrap gap-1">
+                          <span className="flex items-center gap-1 text-emerald-300">
+                            <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                            Zero-Bit Collision • Verified via RAZORPAY_KEY_SECRET
+                          </span>
+                          <span className="font-semibold text-emerald-400">STATE: ATOMICALLY_SETTLED</span>
+                        </div>
                       </div>
-                    </div>
+                    </details>
 
                     <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-1">
                       <Link
@@ -1713,10 +1718,10 @@ export default function AgentDemoPage() {
                   <button
                     type="button"
                     onClick={() => setShowJson(!showJson)}
-                    className="text-xs text-stone-400 hover:text-stone-200 flex items-center justify-center gap-1.5 py-1 transition-colors"
+                    className="text-xs text-stone-400 hover:text-stone-200 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg border border-white/[0.06] hover:border-white/20 bg-[#121316] transition-colors cursor-pointer self-center"
                   >
-                    <Code className="w-3.5 h-3.5" />
-                    <span>{showJson ? 'Hide Raw Proposal JSON' : 'Inspect Raw Proposal JSON'}</span>
+                    <Code className="w-3.5 h-3.5 shrink-0" />
+                    <span>{showJson ? '🔍 Hide Raw Proposal JSON' : '🔍 Inspect Raw Data & Proposal JSON'}</span>
                   </button>
 
                   {showJson && (
@@ -1823,20 +1828,20 @@ export default function AgentDemoPage() {
           {/* Inspect Agent Reasoning Accordion Trigger Button & Collapsible Trace */}
           {activeResponse && (
             <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setIsTraceExpanded(!isTraceExpanded)}
-                  className="text-xs text-stone-400 hover:text-white flex items-center gap-1.5 py-1.5 px-3 rounded-xl border border-white/[0.08] bg-[#181A20] hover:bg-[#20232B] transition-colors cursor-pointer shadow-sm"
+                  className="text-xs text-stone-300 hover:text-white flex items-center gap-1.5 py-2 px-3.5 rounded-xl border border-white/[0.1] bg-[#181A20] hover:bg-[#20232B] transition-colors cursor-pointer shadow-sm"
                 >
-                  <span className="text-amber-400">⚡</span>
-                  <span>
-                    {activeResponse.toolCalls?.length || 2} Tool Calls Executed ({isTraceExpanded ? 'Hide Runtime Trace ▴' : 'View Runtime Trace ▾'})
+                  <span className="text-amber-400 shrink-0">⚙️</span>
+                  <span className="font-semibold">
+                    {isTraceExpanded ? '⚙️ Hide Developer Trace & AI Reasoning ▴' : '⚙️ View Developer Trace & AI Reasoning ▾'}
                   </span>
                 </button>
 
                 <span className="text-[10px] font-mono text-stone-500">
-                  {activeResponse.thoughtProcess?.length || 0} reasoning steps
+                  {activeResponse.thoughtProcess?.length || 0} reasoning steps • {activeResponse.toolCalls?.length || 0} tool calls
                 </span>
               </div>
 

@@ -23,6 +23,7 @@ import {
   ExternalLink,
   ShieldAlert,
   Zap,
+  Code,
 } from 'lucide-react';
 import { AuthorityTag } from '../../components/AuthorityTag';
 import { TiltCard } from '../../components/ui/TiltCard';
@@ -721,10 +722,10 @@ export default function IngestionStudioPage() {
           {/* RIGHT COLUMN: REAL-TIME EXTRACTION PREVIEW (7 Cols)      */}
           {/* ======================================================== */}
           <div className="lg:col-span-7 flex flex-col gap-5">
-            <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
+            <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-emerald-400" />
+                  <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
                   <h3 className="text-sm font-semibold text-[#F8F9FA]">
                     Live Transformation Visualizer
                   </h3>
@@ -813,56 +814,62 @@ export default function IngestionStudioPage() {
                     </div>
                   )}
 
-                  {/* Extracted Products List */}
+                  {/* Extracted Products List (Task 3: Mobile Grid Overhaul) */}
                   <div>
                     <h4 className="text-xs font-semibold text-stone-400 uppercase tracking-wider font-mono mb-2.5">
-                      Extracted Products
+                      Extracted Products ({extractionResult.products.length})
                     </h4>
-                    <div className="flex flex-col gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {extractionResult.products.map((p, idx) => (
                         <div
                           key={idx}
-                          className="p-3.5 rounded-xl bg-[#121316] border border-white/[0.06] hover:border-stone-700/80 transition-all flex flex-col gap-2"
+                          className="p-3.5 rounded-xl bg-[#121316] border border-white/[0.06] hover:border-stone-700/80 transition-all flex flex-col justify-between gap-2.5"
                         >
-                          <div className="flex items-start justify-between gap-3 flex-wrap">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-[#F8F9FA]">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-sm font-bold text-[#F8F9FA] leading-snug">
                                 {p.name}
                               </span>
                               {p.isEggless && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium shrink-0">
                                   Eggless
                                 </span>
                               )}
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap text-xs">
                               {p.price !== null ? (
-                                <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30">
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30">
                                   ₹{p.price}
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-lg bg-rose-500/15 text-rose-300 font-mono text-[11px] font-bold border border-rose-500/30">
-                                  Price: Null (Unstated)
+                                <span className="px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-300 font-mono text-[10px] font-bold border border-rose-500/30">
+                                  Price: Null
                                 </span>
                               )}
 
                               {p.inventory !== null ? (
-                                <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/15 text-amber-300 font-mono text-xs font-bold border border-amber-500/30">
+                                <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 font-mono text-xs font-bold border border-amber-500/30">
                                   {p.inventory} boxes
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-300 font-mono text-[11px] font-bold border border-amber-500/30">
-                                  Stock: Null (Unstated)
+                                <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 font-mono text-[10px] font-bold border border-amber-500/30">
+                                  Stock: Null
                                 </span>
                               )}
                             </div>
                           </div>
 
                           {p.sourceEvidence && (
-                            <div className="text-[11px] text-stone-400 italic bg-[#181A20]/80 p-2 rounded-lg border border-white/[0.06]">
-                              &ldquo;{p.sourceEvidence}&rdquo;
-                            </div>
+                            <details className="group text-[11px] pt-1 border-t border-white/[0.04]">
+                              <summary className="cursor-pointer select-none text-[10px] text-stone-500 hover:text-stone-300 font-mono flex items-center justify-between">
+                                <span>🔍 Source Evidence</span>
+                                <span className="group-open:rotate-180 transition-transform text-[10px]">▾</span>
+                              </summary>
+                              <div className="mt-1 text-[10px] text-stone-400 italic bg-[#181A20]/80 p-2 rounded-lg border border-white/[0.06] break-words">
+                                &ldquo;{p.sourceEvidence}&rdquo;
+                              </div>
+                            </details>
                           )}
                         </div>
                       ))}
@@ -873,9 +880,9 @@ export default function IngestionStudioPage() {
                   {extractionResult.policies.length > 0 && (
                     <div>
                       <h4 className="text-xs font-semibold text-stone-400 uppercase tracking-wider font-mono mb-2.5">
-                        Extracted Policies
+                        Extracted Policies ({extractionResult.policies.length})
                       </h4>
-                      <div className="flex flex-col gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         {extractionResult.policies.map((pol, idx) => (
                           <div
                             key={idx}
@@ -894,6 +901,22 @@ export default function IngestionStudioPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Collapsible Raw Extraction JSON (Task 1: Progressive Disclosure) */}
+                  <details className="group rounded-xl bg-[#121316] border border-white/[0.06] overflow-hidden text-[11px] font-mono">
+                    <summary className="p-3 cursor-pointer select-none flex items-center justify-between text-stone-400 hover:text-stone-200 hover:bg-white/[0.02] transition-colors">
+                      <span className="flex items-center gap-2">
+                        <Code className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                        <span>🔍 Inspect Raw Extracted Data (JSON AST)</span>
+                      </span>
+                      <span className="text-[10px] text-stone-500 group-open:rotate-180 transition-transform">▾</span>
+                    </summary>
+                    <div className="p-3 border-t border-white/[0.04] bg-[#0E0F12] overflow-x-auto no-scrollbar max-h-60">
+                      <pre className="text-[10px] text-stone-300 font-mono">
+                        {JSON.stringify(extractionResult, null, 2)}
+                      </pre>
+                    </div>
+                  </details>
 
                   {/* Commit Action Footer */}
                   <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/30 via-[#181A20] to-[#181A20] border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-2">

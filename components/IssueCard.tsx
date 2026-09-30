@@ -131,21 +131,21 @@ export const IssueCard: React.FC<IssueCardProps> = ({
     switch (severity.toUpperCase()) {
       case 'CRITICAL':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
-            <ShieldAlert className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0">
+            <ShieldAlert className="w-3 h-3 shrink-0" />
             CRITICAL INVARIANT
           </span>
         );
       case 'HIGH':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-            <AlertTriangle className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0">
+            <AlertTriangle className="w-3 h-3 shrink-0" />
             HIGH PRIORITY
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0">
             QUALITY IMPROVEMENT
           </span>
         );
@@ -260,7 +260,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   if (mode === 'merchant') {
     return (
       <TiltCard className="rounded-2xl">
-        <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] hover:border-stone-700/80 p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4 transition-all">
+        <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] hover:border-stone-700/80 p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4 transition-all">
         {/* Top Header */}
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-start gap-3">
@@ -276,13 +276,13 @@ export const IssueCard: React.FC<IssueCardProps> = ({
               }`}
             >
               {isConflict ? (
-                <AlertTriangle className="w-4 h-4" />
+                <AlertTriangle className="w-4 h-4 shrink-0" />
               ) : issue.category === 'PRICE' ? (
-                <Tag className="w-4 h-4" />
+                <Tag className="w-4 h-4 shrink-0" />
               ) : issue.category === 'INVENTORY' ? (
-                <Package className="w-4 h-4" />
+                <Package className="w-4 h-4 shrink-0" />
               ) : (
-                <FileText className="w-4 h-4" />
+                <FileText className="w-4 h-4 shrink-0" />
               )}
             </div>
             <div>
@@ -515,7 +515,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
 
   return (
     <TiltCard className="rounded-2xl">
-      <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] hover:border-stone-700/80 transition-all p-5 shadow-xl shadow-black/20 flex flex-col gap-4">
+      <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] hover:border-stone-700/80 transition-all p-4 sm:p-5 shadow-xl shadow-black/20 flex flex-col gap-4">
       {/* Top Meta Bar */}
       <div className="flex items-center justify-between gap-3 flex-wrap border-b border-white/[0.08] pb-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -548,38 +548,43 @@ export const IssueCard: React.FC<IssueCardProps> = ({
         {/* Left Sub-Panel: Raw Evidence Extract (4 Cols) */}
         <div className="lg:col-span-4 rounded-xl bg-[#121316] border border-white/[0.08] p-3.5 flex flex-col justify-between font-mono text-xs">
           <div>
-            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-white/[0.06] text-[10px] text-stone-400 uppercase tracking-wider">
-              <span className="flex items-center gap-1.5 text-stone-300">
-                <Terminal className="w-3 h-3 text-amber-400" />
-                Raw Evidence Extract
-              </span>
-              <span className="text-stone-500">Multimodal Provenance</span>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              {rawLines.map((line, idx) => (
-                <div
-                  key={idx}
-                  className={`p-2 rounded-lg text-[11px] leading-relaxed border ${
-                    line.variant === 'conflict-a'
-                      ? 'bg-rose-950/30 border-rose-500/30 text-rose-200'
-                      : line.variant === 'conflict-b'
-                      ? 'bg-amber-950/30 border-amber-500/30 text-amber-200'
-                      : line.variant === 'rule'
-                      ? 'bg-[#181A20] border-white/[0.06] text-stone-400'
-                      : 'bg-[#181A20]/60 border-white/[0.06] text-stone-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[10px] text-stone-500 pb-1 mb-1 border-b border-white/5">
-                    <span className="text-stone-400 font-semibold">
-                      [{line.source}]
-                    </span>
-                    <span>L:{line.num}</span>
-                  </div>
-                  <span className="break-words">{line.text}</span>
+            <details className="group" open>
+              <summary className="flex items-center justify-between pb-2 mb-2.5 border-b border-white/[0.06] text-[10px] text-stone-400 uppercase tracking-wider cursor-pointer select-none">
+                <span className="flex items-center gap-1.5 text-stone-300">
+                  <Terminal className="w-3 h-3 text-amber-400 shrink-0" />
+                  Raw Evidence Extract
+                </span>
+                <div className="flex items-center gap-1">
+                  <span className="text-stone-500 font-mono text-[9px]">Provenance</span>
+                  <span className="text-stone-400 group-open:rotate-180 transition-transform">▾</span>
                 </div>
-              ))}
-            </div>
+              </summary>
+
+              <div className="flex flex-col gap-2">
+                {rawLines.map((line, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-2 rounded-lg text-[11px] leading-relaxed border ${
+                      line.variant === 'conflict-a'
+                        ? 'bg-rose-950/30 border-rose-500/30 text-rose-200'
+                        : line.variant === 'conflict-b'
+                        ? 'bg-amber-950/30 border-amber-500/30 text-amber-200'
+                        : line.variant === 'rule'
+                        ? 'bg-[#181A20] border-white/[0.06] text-stone-400'
+                        : 'bg-[#181A20]/60 border-white/[0.06] text-stone-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-[10px] text-stone-500 pb-1 mb-1 border-b border-white/5">
+                      <span className="text-stone-400 font-semibold">
+                        [{line.source}]
+                      </span>
+                      <span>L:{line.num}</span>
+                    </div>
+                    <span className="break-words">{line.text}</span>
+                  </div>
+                ))}
+              </div>
+            </details>
           </div>
 
           <div className="mt-3 pt-2 border-t border-white/[0.06] text-[10px] text-stone-500 flex items-center justify-between">
@@ -593,7 +598,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           <div>
             <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-amber-500/20 text-[10px] text-amber-300 font-mono uppercase tracking-wider">
               <span className="flex items-center gap-1.5 font-bold">
-                <Sparkles className="w-3 h-3 text-amber-400" />
+                <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
                 AI Remediation Diagnosis
               </span>
               <span className="text-amber-400/80">Agent Impact</span>
@@ -625,7 +630,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           <div>
             <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-white/[0.06] text-[10px] text-stone-400 font-mono uppercase tracking-wider">
               <span className="flex items-center gap-1.5 text-stone-200 font-bold">
-                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
                 Authoritative Action
               </span>
               <span className="text-amber-400 font-semibold">HITL Required</span>

@@ -104,7 +104,7 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
       case 'DATA_INGESTION_COMPLETED':
         return {
           bg: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-          icon: <Database className="w-3.5 h-3.5" />,
+          icon: <Database className="w-3.5 h-3.5 shrink-0" />,
           label: 'Data Ingestion',
         };
       case 'MERCHANT_VERIFIED_PRICE':
@@ -112,51 +112,51 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
       case 'MERCHANT_RESOLVED_CONFLICT':
         return {
           bg: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
-          icon: <Tag className="w-3.5 h-3.5" />,
+          icon: <Tag className="w-3.5 h-3.5 shrink-0" />,
           label: 'Catalog Verified',
         };
       case 'POLICY_APPROVED':
         return {
           bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-          icon: <FileCheck className="w-3.5 h-3.5" />,
+          icon: <FileCheck className="w-3.5 h-3.5 shrink-0" />,
           label: 'Policy Approved',
         };
       case 'TRANSACTION_PROPOSAL_CREATED':
         return {
           bg: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
-          icon: <Tag className="w-3.5 h-3.5" />,
+          icon: <Tag className="w-3.5 h-3.5 shrink-0" />,
           label: 'Proposal Created',
         };
       case 'TRANSACTION_RESERVED':
         return {
           bg: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
-          icon: <Lock className="w-3.5 h-3.5" />,
+          icon: <Lock className="w-3.5 h-3.5 shrink-0" />,
           label: 'Inventory Held',
         };
       case 'RAZORPAY_ORDER_CREATED':
         return {
           bg: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-          icon: <CreditCard className="w-3.5 h-3.5" />,
+          icon: <CreditCard className="w-3.5 h-3.5 shrink-0" />,
           label: 'Razorpay Order',
         };
       case 'PAYMENT_VERIFIED':
       case 'INVENTORY_DEDUCTED':
         return {
           bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-          icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+          icon: <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />,
           label: eventType === 'PAYMENT_VERIFIED' ? 'Payment Verified' : 'Inventory Deducted',
         };
       case 'TRANSACTION_BLOCKED':
       case 'PAYMENT_SIGNATURE_MISMATCH':
         return {
           bg: 'bg-rose-500/10 text-rose-300 border-rose-500/20',
-          icon: <ShieldAlert className="w-3.5 h-3.5" />,
+          icon: <ShieldAlert className="w-3.5 h-3.5 shrink-0" />,
           label: eventType === 'TRANSACTION_BLOCKED' ? 'Gate Blocked' : 'Signature Mismatch',
         };
       default:
         return {
           bg: 'bg-[#121316] text-stone-300 border border-white/[0.08]',
-          icon: <History className="w-3.5 h-3.5" />,
+          icon: <History className="w-3.5 h-3.5 shrink-0" />,
           label: eventType,
         };
     }
@@ -205,7 +205,7 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
               onClick={() => toggleExpand(id)}
               className="text-[10px] font-mono text-amber-400/90 hover:text-amber-300 flex items-center gap-1 cursor-pointer transition-colors"
             >
-              <Code className="w-3 h-3" />
+              <Code className="w-3 h-3 shrink-0" />
               {isExpanded ? 'Collapse JSON Payload' : 'Expand JSON Payload'}
             </button>
           </div>
@@ -216,7 +216,7 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
               </pre>
             </div>
           ) : (
-            <span className="text-xs font-mono text-stone-400 truncate block max-w-full">
+            <span className="text-xs font-mono text-stone-400 truncate block max-w-full break-all">
               {details.slice(0, 120)}...
             </span>
           )}
@@ -240,15 +240,15 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
   };
 
   return (
-    <div className="rounded-2xl bg-[#181A20]/90 backdrop-blur-md border border-white/[0.08] p-6 flex flex-col gap-5 shadow-xl shadow-black/20">
+    <div className="rounded-2xl bg-[#181A20]/90 backdrop-blur-md border border-white/[0.08] p-4 sm:p-6 flex flex-col gap-5 shadow-xl shadow-black/20">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/10 to-stone-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300">
-            <History className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/10 to-stone-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300 shrink-0">
+            <History className="w-5 h-5 shrink-0" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-[#F8F9FA] flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-bold text-[#F8F9FA] flex items-center gap-2">
               {title}
               <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-[#121316] text-stone-300 border border-white/[0.08]">
                 {logs.length} Events
@@ -266,7 +266,7 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
           disabled={loading}
           className="self-start sm:self-auto px-3 py-1.5 rounded-lg bg-[#121316] hover:bg-[#1E2028] border border-white/[0.08] text-stone-200 text-xs font-medium flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
           <span>Refresh Ledger</span>
         </button>
       </div>
@@ -275,7 +275,7 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
       {showFilters && (
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="relative w-full sm:flex-1">
-            <Search className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2 shrink-0" />
             <input
               type="text"
               placeholder="Search audit trail by event type, keywords, or proposal ID..."
@@ -303,10 +303,10 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
       )}
 
       {/* Timeline Feed Container */}
-      <div className="flex flex-col divide-y divide-white/[0.04] max-h-[500px] overflow-y-auto pr-1">
+      <div className="flex flex-col divide-y divide-white/[0.04] max-h-[500px] overflow-y-auto pr-1 w-full overflow-x-auto no-scrollbar">
         {filteredLogs.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-center gap-2 text-stone-500">
-            <History className="w-8 h-8 stroke-1 text-stone-600" />
+            <History className="w-8 h-8 stroke-1 text-stone-600 shrink-0" />
             <span className="text-xs font-mono">No audit events match your filter.</span>
           </div>
         ) : (
@@ -317,7 +317,7 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
                 key={item.id}
                 className="py-3.5 px-2.5 hover:bg-[#121316]/60 rounded-xl transition-colors flex flex-col gap-1.5"
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Event Badge */}
                     <span
@@ -328,7 +328,7 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
                     </span>
 
                     {/* Event ID */}
-                    <span className="text-[10px] font-mono text-stone-500">
+                    <span className="text-[10px] font-mono text-stone-500 truncate max-w-[120px] sm:max-w-none">
                       ID: {item.id.slice(-8)}
                     </span>
                   </div>

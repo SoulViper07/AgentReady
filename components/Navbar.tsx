@@ -157,7 +157,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-4 sm:gap-6">
           <Link href="/dashboard" className="flex items-center gap-2.5 sm:gap-3 group">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-black/20 shrink-0 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white shrink-0" />
             </div>
             <div>
               <div className="flex items-center gap-2">
