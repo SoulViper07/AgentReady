@@ -847,6 +847,7 @@ export default function DashboardPage() {
         {/* Collapsible Immutable Audit Ledger in Merchant View */}
         {viewMode === 'merchant' && (
           <div id="audit-ledger" className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-5 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
+            <span id="ledger" className="block -mt-24 pt-24" />
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2.5">
                 <History className="w-4 h-4 text-stone-400" />
@@ -1525,6 +1526,7 @@ export default function DashboardPage() {
 
             {/* Immutable System Audit Ledger (Full in Inspector View) */}
             <section id="audit-ledger" className="w-full">
+              <span id="ledger" className="block -mt-24 pt-24" />
               <AuditFeed merchantSlug={merchant?.slug || 'sweet-crumbs'} />
             </section>
           </div>
