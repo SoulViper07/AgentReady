@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --turbopack",
+    "build": "prisma generate && prisma db push && next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "next lint",
     "push": "git add . && git commit -m \"update: milestone sync\" && git push",
     "postinstall": "prisma skills sync || exit 0",
     "test:ingest": "ts-node scripts/test-ingest.ts",
