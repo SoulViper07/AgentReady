@@ -24,10 +24,12 @@ import {
   ChevronUp,
   Sparkles,
   UploadCloud,
+  Info,
 } from 'lucide-react';
 import { IssueCard } from '../../components/IssueCard';
 import { AuditFeed } from '../../components/AuditFeed';
 import { AuthorityTag } from '../../components/AuthorityTag';
+import SeedDemoButton from '../../components/SeedDemoButton';
 import { PipelineRail } from '../../components/PipelineRail';
 import { motion, useSpring } from 'framer-motion';
 import { Spotlight } from '../../components/ui/Spotlight';
@@ -434,10 +436,35 @@ export default function DashboardPage() {
     );
   }
 
+  if (products.length === 0) {
+    return (
+      <div className="w-full max-w-7xl mx-auto px-4 py-20 text-center flex flex-col items-center justify-center min-h-[60vh]">
+        <h2 className="text-2xl font-semibold text-stone-200">Sandbox Reset</h2>
+        <p className="text-stone-400 mt-3 max-w-md mx-auto leading-relaxed">
+          Our hosting environment occasionally clears the test database. Initialize the sandbox to explore the AI Readiness Gates and Buyer Terminal.
+        </p>
+        <SeedDemoButton onSuccess={fetchReadiness} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[calc(100dvh-4rem)] flex-1 bg-[#0E0F12] text-stone-100 font-sans selection:bg-amber-500/30 selection:text-amber-200 flex flex-col">
       {/* Main Responsive Container */}
       <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8 flex-1">
+        {/* Sandbox Banner */}
+        <div className="mb-8 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 shrink-0">
+            <Info className="w-5 h-5"/>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-indigo-300">Sandbox Environment Active</h3>
+            <p className="text-xs text-indigo-200/70 mt-1 leading-relaxed">
+              We&apos;ve pre-loaded a sample merchant (Sweet Crumbs) so you can test the Readiness Gates and AI Buyer Terminal immediately. To test your own data, use the Multimodal Ingest tab.
+            </p>
+          </div>
+        </div>
+
         {/* Top Hero & Readiness Header */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#181A20] via-[#141519] to-[#0E0F12] border border-white/[0.08] p-5 sm:p-7 shadow-2xl shadow-black/30 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <Spotlight status={merchant?.transactionStatus || 'NOT_READY'} />

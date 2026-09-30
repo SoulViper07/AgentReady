@@ -921,6 +921,10 @@ export default function AgentDemoPage() {
               )}
             </div>
 
+            <p className="text-xs text-stone-500 mt-2">
+              Try ordering from the sandbox: <span className="text-stone-400 italic">&ldquo;I want 2 Dark Desire cookies and 1 Hazel Choco Bomb&rdquo;</span>
+            </p>
+
             {/* Action Bar: Keyboard Shortcut + Run Button */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-0.5">
               <div className="text-[11px] text-stone-400 font-mono flex items-center gap-1.5">
