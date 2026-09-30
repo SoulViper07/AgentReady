@@ -155,8 +155,15 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Main Top Bar */}
       <div className="px-4 py-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-4 sm:gap-6">
-          <Link href="/dashboard" className="flex items-center gap-2.5 sm:gap-3 group">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-black/20 shrink-0 group-hover:scale-105 transition-transform">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/dashboard');
+            }}
+            className="flex items-center gap-2.5 sm:gap-3 group cursor-pointer text-left touch-manipulation"
+          >
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-black/20 shrink-0 md:group-hover:scale-105 transition-transform">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white shrink-0" />
             </div>
             <div>
@@ -175,7 +182,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     : 'Merchant Remediation & Verification Console')}
               </p>
             </div>
-          </Link>
+          </button>
 
           {/* Desktop Navigation Pills with Smooth Sliding Active Pill Indicator */}
           <nav className="hidden sm:flex items-center gap-1 border-l border-white/[0.08] pl-4 sm:pl-5">
@@ -183,26 +190,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               const isActive = link.shortTag === 'LOG' ? false : pathname === link.href;
               const Icon = link.icon;
               return (
-                <Link
+                <button
                   key={link.href}
-                  href={link.href}
-                  onClick={
-                    link.shortTag === 'LOG'
-                      ? (e) => {
-                          e.preventDefault();
-                          router.push('/dashboard#ledger');
-                          const el = document.getElementById('ledger');
-                          if (el) {
-                            el.scrollIntoView({ behavior: 'smooth' });
-                          }
-                          window.dispatchEvent(new Event('agentready:open-ledger'));
-                        }
-                      : undefined
-                  }
-                  className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 active:scale-[0.97] touch-manipulation tactile-btn ${
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (link.shortTag === 'LOG') {
+                      router.push('/dashboard#ledger');
+                      const el = document.getElementById('ledger');
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth' });
+                      }
+                      window.dispatchEvent(new Event('agentready:open-ledger'));
+                    } else {
+                      router.push(link.href);
+                    }
+                  }}
+                  className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 active:scale-[0.97] touch-manipulation cursor-pointer ${
                     isActive
                       ? 'text-emerald-400'
-                      : 'text-stone-400 hover:text-white hover:bg-white/[0.04]'
+                      : 'text-stone-400 md:hover:text-white md:hover:bg-white/[0.04]'
                   }`}
                 >
                   {isActive && (
@@ -218,7 +225,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }`}
                   />
                   <span>{link.label}</span>
-                </Link>
+                </button>
               );
             })}
           </nav>
@@ -292,24 +299,24 @@ export const Navbar: React.FC<NavbarProps> = ({
           const isActive = link.shortTag === 'LOG' ? false : pathname === link.href;
           const Icon = link.icon;
           return (
-            <Link
+            <button
               key={link.href}
-              href={link.href}
+              type="button"
               aria-label={link.label}
-              onClick={
-                link.shortTag === 'LOG'
-                  ? (e) => {
-                      e.preventDefault();
-                      router.push('/dashboard#ledger');
-                      const el = document.getElementById('ledger');
-                      if (el) {
-                        el.scrollIntoView({ behavior: 'smooth' });
-                      }
-                      window.dispatchEvent(new Event('agentready:open-ledger'));
-                    }
-                  : undefined
-              }
-              className={`relative min-h-[34px] flex-1 py-1 px-2 rounded-lg flex items-center justify-center gap-1 text-[11px] font-medium active:scale-[0.96] transition-all cursor-pointer touch-manipulation select-none ${
+              onClick={(e) => {
+                e.preventDefault();
+                if (link.shortTag === 'LOG') {
+                  router.push('/dashboard#ledger');
+                  const el = document.getElementById('ledger');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth' });
+                  }
+                  window.dispatchEvent(new Event('agentready:open-ledger'));
+                } else {
+                  router.push(link.href);
+                }
+              }}
+              className={`relative min-h-[36px] flex-1 py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 text-[11px] font-medium active:scale-[0.97] transition-all cursor-pointer touch-manipulation select-none ${
                 isActive
                   ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.12)]'
                   : 'bg-white/[0.02] text-stone-400 border border-white/[0.04]'
@@ -319,7 +326,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="font-mono font-semibold tracking-wider pointer-events-none">
                 {link.shortTag}
               </span>
-            </Link>
+            </button>
           );
         })}
       </div>

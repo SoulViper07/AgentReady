@@ -440,10 +440,10 @@ export default function IngestionStudioPage() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id as 'image' | 'text' | 'presets')}
-                    className={`relative py-2 px-2 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97] tactile-btn ${
+                    className={`relative py-2 px-2 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97] touch-manipulation ${
                       isActive
                         ? 'text-white'
-                        : 'text-stone-400 hover:text-[#F8F9FA]'
+                        : 'text-stone-400 md:hover:text-[#F8F9FA]'
                     }`}
                   >
                     {isActive && (

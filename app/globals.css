@@ -41,8 +41,10 @@ body {
   .tactile-btn:active {
     transform: scale(0.97);
   }
-  .tactile-btn:hover {
-    filter: brightness(1.05);
+  @media (hover: hover) {
+    .tactile-btn:hover {
+      filter: brightness(1.05);
+    }
   }
 }
 
