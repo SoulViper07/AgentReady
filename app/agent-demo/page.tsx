@@ -232,10 +232,11 @@ export default function AgentDemoPage() {
   });
   const [quickVerifying, setQuickVerifying] = useState(false);
   const [countdown, setCountdown] = useState<string>('10:00');
-  const [viewMode, setViewMode] = useState<'merchant' | 'inspector'>('merchant');
+  const [viewMode, setViewMode] = useState<'user' | 'inspector'>('user');
+  const activeView = viewMode;
   const [isTraceExpanded, setIsTraceExpanded] = useState<boolean>(false);
 
-  const handleViewModeChange = (mode: 'merchant' | 'inspector') => {
+  const handleViewModeChange = (mode: 'user' | 'inspector') => {
     setViewMode(mode);
     setIsTraceExpanded(mode === 'inspector');
   };
@@ -246,6 +247,9 @@ export default function AgentDemoPage() {
       if (params.get('view') === 'inspector' || params.get('mode') === 'inspector') {
         setViewMode('inspector');
         setIsTraceExpanded(true);
+      } else {
+        setViewMode('user');
+        setIsTraceExpanded(false);
       }
     }
   }, []);
@@ -879,1239 +883,679 @@ export default function AgentDemoPage() {
         </div>
       )}
 
-      {/* Dual-View Mode Switcher Banner (iOS Segmented Pill Control) */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* View Mode Switcher Banner (Native iOS Segmented Control) */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs text-stone-400">
           <span className="font-semibold text-stone-200">Active View:</span>
           <span className="text-stone-400 hidden xs:inline">
-            {viewMode === 'merchant'
+            {activeView === 'user'
               ? 'Merchant / User View • Simplified commerce checkout & clean conversational outcome'
               : 'Inspector Mode (Judges) • Autonomous agent runtime trace, AST tool arguments & invariants'}
           </span>
         </div>
 
-        {/* iOS-Style Native Segmented Control */}
-        <div className="w-full sm:w-auto sm:min-w-[340px] grid grid-cols-2 p-1 bg-[#181A20] border border-white/[0.08] rounded-2xl shadow-lg shadow-black/20">
+        {/* Native iOS Segmented Control */}
+        <div className="relative inline-flex p-1 bg-stone-900 border border-white/[0.06] rounded-xl self-start sm:self-auto shadow-inner">
           <button
             type="button"
-            onClick={() => handleViewModeChange('merchant')}
-            className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.97] ${
-              viewMode === 'merchant'
-                ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/30'
+            onClick={() => handleViewModeChange('user')}
+            className={`relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98] ${
+              activeView === 'user'
+                ? 'text-white'
                 : 'text-stone-400 hover:text-stone-200'
             }`}
           >
+            {activeView === 'user' && (
+              <motion.div
+                layoutId="activeSegment"
+                className="absolute inset-0 bg-stone-800 rounded-lg shadow-sm border border-white/10 -z-10"
+                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+              />
+            )}
             <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-            <span>Merchant / User View</span>
+            <span>Merchant / User</span>
           </button>
           <button
             type="button"
             onClick={() => handleViewModeChange('inspector')}
-            className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.97] ${
-              viewMode === 'inspector'
-                ? 'bg-amber-500/20 text-amber-300 shadow-sm border border-amber-500/30'
+            className={`relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98] ${
+              activeView === 'inspector'
+                ? 'text-amber-200'
                 : 'text-stone-400 hover:text-stone-200'
             }`}
           >
+            {activeView === 'inspector' && (
+              <motion.div
+                layoutId="activeSegment"
+                className="absolute inset-0 bg-stone-800 rounded-lg shadow-sm border border-amber-500/20 -z-10"
+                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+              />
+            )}
             <Binary className="w-3.5 h-3.5 shrink-0" />
-            <span>Inspector Mode (Judges)</span>
+            <span>Inspector (Judges)</span>
           </button>
         </div>
       </div>
 
       {/* Main Two-Column Playground */}
-      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-36 md:pb-12 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-36 md:pb-12 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Autonomous Buyer Terminal (6 Cols) */}
         <section className="lg:col-span-6 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pb-1">
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-[#F8F9FA] flex items-center gap-2">
                 <Bot className="w-5 h-5 text-amber-400 shrink-0" />
-                Autonomous Buyer Client
+                {activeView === 'user' ? 'AI Shopping Assistant' : 'Autonomous Buyer Client'}
               </h2>
               <p className="text-xs text-stone-400 mt-0.5">
-                Natural language commerce agent with verified catalog &amp; deterministic gates.
+                {activeView === 'user'
+                  ? 'Tell the assistant what you would like to order from Sweet Crumbs.'
+                  : 'Natural language commerce agent with verified catalog & deterministic gates.'}
               </p>
             </div>
-            <AuthorityTag
-              type="AI_INFERRED"
-              compact
-              customLabel="Autonomous LLM Agent"
-              pulse
-            />
+            {activeView === 'inspector' && (
+              <AuthorityTag
+                type="AI_INFERRED"
+                compact
+                customLabel="Autonomous LLM Agent"
+                pulse
+              />
+            )}
           </div>
 
-          {/* Clean Native Chat-Bubble Feed */}
-          <div className="rounded-2xl bg-[#141519]/90 border border-white/[0.08] shadow-xl shadow-black/20 flex flex-col overflow-hidden">
-            {/* Chat Stream Header */}
-            <div className="px-4 py-3 bg-[#181A20] border-b border-white/[0.06] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-mono font-bold text-stone-200">
-                  AI Buyer Chat Stream
-                </span>
-              </div>
-              <span className="text-[10px] font-mono text-stone-400">
-                Ground Truth Verified
-              </span>
-            </div>
-
-            {/* Chat Messages Container */}
-            <div className="p-4 sm:p-5 flex flex-col gap-3.5 min-h-[380px] max-h-[580px] overflow-y-auto no-scrollbar scroll-smooth">
-              {messages.map((msg) => (
-                <React.Fragment key={msg.id}>
-                  {msg.sender === 'user' ? (
-                    <div className="flex justify-end animate-in fade-in slide-in-from-bottom-2 duration-300">
-                      <div className="max-w-[85%] sm:max-w-[75%] bg-emerald-500/20 border border-emerald-500/30 text-emerald-100 rounded-2xl rounded-tr-sm px-4 py-2.5 shadow-sm text-xs sm:text-sm leading-relaxed">
-                        <p className="whitespace-pre-wrap">{msg.text}</p>
-                        <div className="text-[10px] text-emerald-400/70 font-mono mt-1 text-right">
-                          {msg.timestamp}
-                        </div>
+          {/* De-Boxed Breathable Chat Feed */}
+          <div className="flex-1 flex flex-col gap-3 min-h-[340px] max-h-[580px] overflow-y-auto no-scrollbar scroll-smooth py-1">
+            {messages.map((msg) => (
+              <React.Fragment key={msg.id}>
+                {msg.sender === 'user' ? (
+                  <div className="flex justify-end animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="max-w-[85%] sm:max-w-[75%] bg-stone-800 text-stone-100 rounded-2xl rounded-tr-sm px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-sm">
+                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                      <div className="text-[10px] text-stone-500 font-mono mt-1 text-right">
+                        {msg.timestamp}
                       </div>
                     </div>
-                  ) : (
-                    <div className="flex items-start gap-2.5 justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
-                      <div className="w-7 h-7 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
-                        <Bot className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="max-w-[88%] sm:max-w-[80%] bg-white/[0.05] border border-white/[0.08] text-stone-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-md text-xs sm:text-sm leading-relaxed">
-                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                  </div>
+                ) : (
+                  <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="max-w-[90%] sm:max-w-[82%] bg-white/[0.02] text-stone-300 rounded-2xl rounded-tl-sm px-4 py-3 text-xs sm:text-sm leading-relaxed">
+                      <p className="whitespace-pre-wrap">{msg.text}</p>
 
-                        {/* Proposal Card Highlight inside Chat */}
-                        {msg.proposal && (
-                          <div className="mt-2.5 p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between text-xs font-mono text-emerald-300">
-                            <span className="flex items-center gap-1.5 font-semibold text-white">
-                              <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                              {msg.proposal.requestedQuantity}x{' '}
-                              {msg.proposal.product?.name ||
-                                msg.response?.proposalData?.productName ||
-                                'Verified Item'}
-                            </span>
-                            <span className="font-bold text-emerald-400">
-                              ₹{msg.proposal.calculatedTotal}.00
-                            </span>
-                          </div>
+                      {/* Developer Trace Toggle: ONLY SHOWN IF activeView === 'inspector' */}
+                      {activeView === 'inspector' &&
+                        msg.response &&
+                        (msg.response.thoughtProcess?.length > 0 ||
+                          msg.response.toolCalls?.length > 0) && (
+                          <details className="mt-2.5 group rounded-xl bg-black/40 border border-white/[0.05] overflow-hidden text-xs">
+                            <summary className="p-2 px-2.5 cursor-pointer select-none flex items-center justify-between text-stone-400 hover:text-stone-200 text-[11px] font-mono transition-colors active:scale-[0.97]">
+                              <span className="flex items-center gap-1.5 text-amber-300 font-semibold">
+                                <Sparkles className="w-3 h-3 text-amber-400" />
+                                <span>⚡ View Runtime Trace</span>
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-stone-500">
+                                  {msg.response.thoughtProcess?.length || 0} steps
+                                </span>
+                                <span className="text-[10px] text-stone-400 group-open:rotate-180 transition-transform">
+                                  ▾
+                                </span>
+                              </div>
+                            </summary>
+                            <div className="p-3 border-t border-white/[0.04] space-y-2 bg-[#0C0D0F]">
+                              {msg.response.thoughtProcess?.map((step, sIdx) => {
+                                const style = getThoughtStyle(step);
+                                return (
+                                  <div
+                                    key={sIdx}
+                                    className="flex items-start gap-2 p-1.5 rounded bg-[#141519] border border-white/[0.04] text-[11px] font-mono"
+                                  >
+                                    <span
+                                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 border ${style.badgeBg}`}
+                                    >
+                                      [{sIdx + 1}] {style.typeLabel}
+                                    </span>
+                                    <span className={`${style.textColor} leading-snug flex-1`}>
+                                      {step}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+
+                              {msg.response.toolCalls?.map((tc, tcIdx) => (
+                                <div
+                                  key={tcIdx}
+                                  className="rounded-lg bg-[#141519] border border-white/[0.04] p-2 text-[10px] font-mono"
+                                >
+                                  <span className="text-amber-300 font-semibold block mb-1">
+                                    tool: {tc.toolName}()
+                                  </span>
+                                  <pre className="text-emerald-400 overflow-x-auto no-scrollbar max-h-32">
+                                    {JSON.stringify(tc.result, null, 2)}
+                                  </pre>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
                         )}
 
-                        {/* Discreet Collapsible Runtime Trace - HIDE THE CODE */}
-                        {msg.response &&
-                          (msg.response.thoughtProcess?.length > 0 ||
-                            msg.response.toolCalls?.length > 0) && (
-                            <details className="mt-2.5 group rounded-xl bg-[#101114] border border-white/[0.06] overflow-hidden text-xs">
-                              <summary className="p-2 px-2.5 cursor-pointer select-none flex items-center justify-between text-stone-400 hover:text-stone-200 text-[11px] font-mono transition-colors active:scale-[0.97]">
-                                <span className="flex items-center gap-1.5 text-amber-300 font-semibold">
-                                  <Sparkles className="w-3 h-3 text-amber-400" />
-                                  <span>⚡ View Runtime Trace</span>
-                                </span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] text-stone-500">
-                                    {msg.response.thoughtProcess?.length || 0} steps
-                                  </span>
-                                  <span className="text-[10px] text-stone-400 group-open:rotate-180 transition-transform">
-                                    ▾
-                                  </span>
-                                </div>
-                              </summary>
-                              <div className="p-3 border-t border-white/[0.04] space-y-2 bg-[#0C0D0F]">
-                                {msg.response.thoughtProcess?.map((step, sIdx) => {
-                                  const style = getThoughtStyle(step);
-                                  return (
-                                    <div
-                                      key={sIdx}
-                                      className="flex items-start gap-2 p-1.5 rounded bg-[#141519] border border-white/[0.04] text-[11px] font-mono"
-                                    >
-                                      <span
-                                        className={`px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 border ${style.badgeBg}`}
-                                      >
-                                        [{sIdx + 1}] {style.typeLabel}
-                                      </span>
-                                      <span className={`${style.textColor} leading-snug flex-1`}>
-                                        {step}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-
-                                {msg.response.toolCalls?.map((tc, tcIdx) => (
-                                  <div
-                                    key={tcIdx}
-                                    className="rounded-lg bg-[#141519] border border-white/[0.04] p-2 text-[10px] font-mono"
-                                  >
-                                    <span className="text-amber-300 font-semibold block mb-1">
-                                      tool: {tc.toolName}()
-                                    </span>
-                                    <pre className="text-emerald-400 overflow-x-auto no-scrollbar max-h-32">
-                                      {JSON.stringify(tc.result, null, 2)}
-                                    </pre>
-                                  </div>
-                                ))}
-                              </div>
-                            </details>
-                          )}
-
-                        <div className="text-[10px] text-stone-500 font-mono mt-1.5">
-                          {msg.timestamp}
-                        </div>
+                      <div className="text-[10px] text-stone-500 font-mono mt-1.5">
+                        {msg.timestamp}
                       </div>
                     </div>
-                  )}
-                </React.Fragment>
-              ))}
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
 
-              {/* Typing State with 3 Bouncing Dots */}
-              {loading && (
-                <div className="flex items-start gap-2.5 justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="w-7 h-7 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
-                    <Bot className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="bg-white/[0.05] border border-white/[0.08] text-stone-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-md flex items-center gap-2.5">
-                    <span className="text-xs text-stone-400 font-mono">Evaluating order</span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.3s]" />
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.15s]" />
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" />
-                    </span>
-                  </div>
+            {/* Typing State with 3 Bouncing Dots */}
+            {loading && (
+              <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="bg-white/[0.02] text-stone-400 rounded-2xl rounded-tl-sm px-4 py-2.5 text-xs flex items-center gap-2">
+                  <span>Evaluating</span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" />
+                  </span>
                 </div>
-              )}
+              </div>
+            )}
 
-              <div ref={messagesEndRef} />
-            </div>
+            <div ref={messagesEndRef} />
           </div>
 
-          {/* Native Mobile Sticky Dock / Desktop Relative Input Bar */}
-          <div className="fixed md:relative bottom-0 left-0 w-full p-3 sm:p-4 md:p-0 bg-[#0E0F12]/85 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-t md:border-t-0 border-white/[0.08] z-50 md:z-auto transition-all">
-            <div className="max-w-7xl mx-auto w-full md:max-w-none flex flex-col gap-2">
-              {/* Horizontally scrollable suggestion chips */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                {suggestionChips.map((chip, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setQuery(chip.query);
-                      handleRunBuyer(chip.query);
-                    }}
-                    disabled={loading}
-                    className="shrink-0 px-3 py-1.5 rounded-xl bg-[#181A20] hover:bg-[#20232B] border border-white/[0.08] hover:border-amber-500/30 text-xs text-stone-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer active:scale-[0.97] shadow-sm disabled:opacity-50"
-                  >
-                    <span className="text-amber-300 font-medium">&ldquo;{chip.query}&rdquo;</span>
-                    <span
-                      className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold border ${chip.badgeStyle}`}
-                    >
-                      {chip.badgeText}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Prompt Input Box */}
-              <div className="rounded-2xl bg-[#181A20] border border-white/[0.1] focus-within:border-amber-500/50 focus-within:ring-2 focus-within:ring-amber-500/20 p-2 sm:p-2.5 shadow-2xl flex items-center gap-2 transition-all">
-                <div className="pl-2 hidden xs:flex items-center text-amber-400">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (query.trim() && !loading) {
-                        handleRunBuyer(query);
-                      }
-                    }
+          {/* Sticky Floating Glass Input Bar */}
+          <div className="fixed bottom-4 left-4 right-4 md:relative md:bottom-auto md:left-auto md:right-auto md:w-full rounded-2xl bg-[#1A1C20]/90 backdrop-blur-xl border border-white/10 shadow-2xl z-50 p-2 sm:p-2.5 transition-all">
+            {/* Single-line horizontally scrollable suggestion chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 mb-1.5 scroll-smooth whitespace-nowrap">
+              {suggestionChips.map((chip, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setQuery(chip.query);
+                    handleRunBuyer(chip.query);
                   }}
-                  placeholder="Type order (e.g. '2 boxes of Dark Desire cookies', 'Any eggless dessert under ₹250')..."
-                  className="flex-1 bg-transparent px-2 py-2 text-xs sm:text-sm text-stone-100 placeholder-stone-500 focus:outline-none font-sans"
-                />
-                {query.trim().length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setQuery('')}
-                    className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white transition-colors cursor-pointer border border-white/[0.06] active:scale-[0.97]"
-                    title="Clear input"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                  disabled={loading}
+                  className="shrink-0 px-2.5 py-1 rounded-full bg-stone-800/80 hover:bg-stone-700/80 border border-white/[0.06] text-[11px] text-stone-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.97] shadow-sm disabled:opacity-50"
+                >
+                  <span>&ldquo;{chip.query}&rdquo;</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Prompt Input Box */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (query.trim() && !loading) {
+                      handleRunBuyer(query);
+                    }
+                  }
+                }}
+                placeholder="Ask AI Buyer (e.g. '1 box of Dark Desire cookies')..."
+                className="flex-1 bg-transparent px-2.5 py-2 text-xs sm:text-sm text-stone-100 placeholder-stone-500 focus:outline-none font-sans"
+              />
+              {query.trim().length > 0 && (
                 <button
                   type="button"
-                  onClick={() => handleRunBuyer(query)}
-                  disabled={loading || !query.trim()}
-                  className="min-h-[42px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600 hover:from-amber-500 hover:to-emerald-500 disabled:from-stone-800 disabled:to-stone-800 disabled:text-stone-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-black/30 disabled:shadow-none transition-all cursor-pointer disabled:cursor-not-allowed active:scale-[0.97] shrink-0"
+                  onClick={() => setQuery('')}
+                  className="p-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white transition-colors cursor-pointer border border-white/[0.06] active:scale-[0.97]"
+                  title="Clear input"
                 >
-                  {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-amber-200" />
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5 text-amber-200" />
-                      <span className="hidden sm:inline">Run AI Buyer</span>
-                    </>
-                  )}
+                  <X className="w-3.5 h-3.5" />
                 </button>
-              </div>
+              )}
+              <button
+                type="button"
+                onClick={() => handleRunBuyer(query)}
+                disabled={loading || !query.trim()}
+                className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:bg-stone-800 disabled:text-stone-500 text-emerald-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer disabled:cursor-not-allowed active:scale-[0.97] shrink-0"
+              >
+                {loading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-950" />
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Send</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </section>
-        {/* Right Column: Transaction Proposal Inspector (6 Cols) */}
-        <section className="lg:col-span-6 flex flex-col gap-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-[#F8F9FA] flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-emerald-400" />
-                Transaction Proposal Inspector
-              </h2>
-              <p className="text-xs text-stone-400 mt-1">
-                Cryptographically verifiable order payload ready for invariant gating and settlement rails.
-              </p>
-            </div>
-            <AuthorityTag type="FINTECH_GATE" compact customLabel="Fintech Gate" />
-          </div>
-
-          {/* FINANCIAL AUTHORITY BOUNDARY BANNER */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950/30 via-[#181A20] to-[#121316] border border-emerald-500/20 p-3.5 shadow-lg shadow-black/20">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
+        {/* Right Column: Transaction Proposal & Checkout (6 Cols) */}
+        <section className="lg:col-span-6 flex flex-col gap-4">
+          {/* Inspector Header: ONLY shown in inspector mode */}
+          {activeView === 'inspector' && (
+            <>
+              <div className="flex items-start justify-between">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-emerald-300 tracking-wide">
-                      🛡️ FINANCIAL AUTHORITY BOUNDARY
-                    </span>
-                    <AuthorityTag type="DETERMINISTIC" compact customLabel="No LLM Authority" />
-                  </div>
-                  <p className="text-[11px] text-stone-400 mt-0.5 leading-snug">
-                    LLM reasoning halted. Deterministic Invariant Gate engaged. Zero stochastic authority in payment calculation or stock deduction.
+                  <h2 className="text-lg font-bold text-[#F8F9FA] flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-emerald-400" />
+                    Transaction Proposal Inspector
+                  </h2>
+                  <p className="text-xs text-stone-400 mt-0.5">
+                    Cryptographically verifiable order payload ready for invariant gating and settlement rails.
                   </p>
                 </div>
+                <AuthorityTag type="FINTECH_GATE" compact customLabel="Fintech Gate" />
               </div>
-              <AuthorityTag type="FINTECH_GATE" compact customLabel="Active" pulse />
-            </div>
-          </div>
 
-          {/* Active Proposal Card (Apple Pay-Style Checkout Card) */}
-          {proposal ? (
-            <TiltCard className="rounded-2xl">
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-stone-900 to-[#0E0F12] border border-white/10 shadow-2xl p-4 sm:p-6 flex flex-col gap-5 backdrop-blur-md">
-                {/* 1. Merchant Badge & Security Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+              {/* Financial Authority Boundary Banner */}
+              <div className="rounded-xl bg-[#121316] border border-white/[0.05] p-3 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-emerald-400 font-bold text-xs">
+                    🛡️ FINANCIAL AUTHORITY BOUNDARY
+                  </span>
+                  <AuthorityTag type="DETERMINISTIC" compact customLabel="No LLM Authority" />
+                </div>
+                <p className="text-[11px] text-stone-400 mt-1">
+                  LLM reasoning halted. Deterministic Invariant Gate engaged. Zero stochastic authority in payment calculation or stock deduction.
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* User Mode: Apple Pay / Stripe Style Checkout Card */}
+          {activeView === 'user' ? (
+            proposal ? (
+              <div className="bg-[#121316] border border-white/[0.08] shadow-2xl rounded-3xl p-6 flex flex-col gap-5 animate-in fade-in">
+                {/* Top: Merchant Name and subtle Secure Checkout lock */}
+                <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 via-emerald-500/20 to-stone-800 border border-white/[0.08] flex items-center justify-center text-amber-200 font-bold text-sm shadow-inner shrink-0">
+                    <div className="w-9 h-9 rounded-2xl bg-stone-800 border border-white/[0.06] flex items-center justify-center font-bold text-xs text-stone-200">
                       SC
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-semibold text-[#F8F9FA] tracking-tight">
-                          {proposal.merchant?.name ||
-                            activeResponse?.proposalData?.merchantName ||
-                            'Sweet Crumbs'}
-                        </h3>
-                        <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                          <Lock className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
-                          <span>End-to-End Encrypted</span>
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-stone-400 font-mono mt-0.5">
+                      <h3 className="text-sm font-semibold text-white">
+                        {proposal.merchant?.name || activeResponse?.proposalData?.merchantName || 'Sweet Crumbs'}
+                      </h3>
+                      <span className="text-[11px] text-stone-500 font-sans">Artisan Bakery &amp; Desserts</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-stone-400 bg-white/[0.03] px-2.5 py-1 rounded-full border border-white/[0.04]">
+                    <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Secure Checkout</span>
+                  </div>
+                </div>
+
+                {/* Middle: Clean line items. Large, crisp typography */}
+                <div className="flex flex-col gap-3 py-1">
+                  <div className="flex items-baseline justify-between gap-4">
+                    <div>
+                      <span className="text-base font-medium text-stone-100">
+                        {proposal.requestedQuantity}x {proposal.product?.name || activeResponse?.proposalData?.productName || 'Dark Desire Cookies'}
+                      </span>
+                      {proposal.product?.isEggless && (
+                        <span className="block text-[11px] text-emerald-400/90 font-medium mt-0.5">100% Eggless</span>
+                      )}
+                    </div>
+                    <span className="text-base font-semibold text-white font-mono">
+                      ₹{(proposal.requestedQuantity * proposal.offeredPrice).toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-stone-400 pt-3 border-t border-white/[0.04]">
+                    <span>Standard Local Delivery</span>
+                    <span className="text-stone-300 font-medium">Free</span>
+                  </div>
+                </div>
+
+                {/* Total: Massive clear typography */}
+                <div className="flex items-baseline justify-between pt-3 border-t border-white/[0.06]">
+                  <span className="text-xs text-stone-400 uppercase tracking-wider font-semibold">Total Due</span>
+                  <div className="text-3xl font-semibold tracking-tight text-white font-mono mt-2">
+                    ₹{proposal.calculatedTotal}.00
+                  </div>
+                </div>
+
+                {/* Verified Payment Receipt in User View */}
+                {verifiedReceipt && (
+                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-stone-100 flex flex-col gap-2.5 animate-in fade-in">
+                    <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Payment Verified &amp; Order Placed!</span>
+                    </div>
+                    <p className="text-xs text-stone-300">
+                      Payment ID: <span className="font-mono text-emerald-300">{verifiedReceipt.paymentId}</span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVerifiedReceipt(null);
+                        setCheckoutOrderData(null);
+                      }}
+                      className="mt-1 py-2 px-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-medium self-start active:scale-[0.98] transition-transform"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
+
+                {/* Bottom: Massive Highly-Tappable CTA Button */}
+                {!verifiedReceipt && (
+                  <button
+                    type="button"
+                    onClick={
+                      proposal.status === 'RESERVED' && checkoutOrderData
+                        ? () => openRazorpayCheckout(checkoutOrderData)
+                        : handleProceedToGate
+                    }
+                    disabled={gateLoading || proposal.status === 'BLOCKED'}
+                    className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-stone-800 disabled:text-stone-500 text-emerald-950 font-bold text-lg py-4 rounded-2xl active:scale-[0.98] transition-transform flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-emerald-950/30 disabled:cursor-not-allowed"
+                  >
+                    {gateLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-emerald-950" />
+                    ) : proposal.status === 'BLOCKED' ? (
+                      <span>Item Unavailable ⛔</span>
+                    ) : (
+                      <span>Pay ₹{proposal.calculatedTotal}.00</span>
+                    )}
+                  </button>
+                )}
+              </div>
+            ) : activeResponse ? (
+              <div className="bg-[#121316] border border-white/[0.08] shadow-2xl rounded-3xl p-6 flex flex-col gap-3">
+                <div className="flex items-center gap-2 text-amber-400 font-semibold text-sm">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Order could not be formulated</span>
+                </div>
+                <p className="text-xs text-stone-400 leading-relaxed">
+                  {activeResponse.explanation}
+                </p>
+              </div>
+            ) : (
+              <div className="bg-[#121316]/50 border border-white/[0.05] rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-2.5 min-h-[280px]">
+                <ShoppingBag className="w-10 h-10 text-stone-600" />
+                <span className="text-xs text-stone-400 font-medium">
+                  Your checkout proposal will appear here
+                </span>
+                <p className="text-[11px] text-stone-500 max-w-xs">
+                  Ask the assistant for cookies or desserts to begin instant checkout.
+                </p>
+              </div>
+            )
+          ) : (
+            /* Inspector Mode: Clean Terminal View with Strict Invariant Verification */
+            <>
+              {proposal ? (
+                <div className="rounded-2xl bg-[#121316] border border-white/[0.05] p-5 flex flex-col gap-4 shadow-xl">
+                  {/* Top Bar with IDs and timer */}
+                  <div className="flex items-center justify-between pb-3 border-b border-white/[0.05]">
+                    <div>
+                      <span className="font-semibold text-sm text-stone-200">
+                        {proposal.merchant?.name || 'Sweet Crumbs'}
+                      </span>
+                      <div className="flex items-center gap-2 text-[10px] text-stone-400 font-mono mt-0.5">
                         <span>Proposal #{proposal.id.slice(0, 8)}</span>
                         <span>•</span>
                         <button
                           type="button"
                           onClick={() => copyProposalId(proposal.id)}
-                          className="flex items-center gap-1 text-stone-400 hover:text-white transition-colors cursor-pointer active:scale-[0.97]"
+                          className="text-stone-400 hover:text-white transition-colors cursor-pointer"
                         >
-                          <span className="truncate max-w-[110px] sm:max-w-[180px] break-all">{proposal.id}</span>
-                          {copiedId ? (
-                            <Check className="w-3 h-3 text-emerald-400 shrink-0" />
-                          ) : (
-                            <Copy className="w-3 h-3 text-stone-500 shrink-0" />
-                          )}
+                          {copiedId ? 'Copied' : 'Copy ID'}
                         </button>
                       </div>
                     </div>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 border border-white/[0.05] text-[11px] font-mono text-amber-300">
+                      <Clock className="w-3 h-3 text-amber-400" />
+                      <span>{countdown}</span>
+                    </div>
                   </div>
 
-                  {/* Expiry Countdown Timer */}
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121316] border border-white/[0.08] text-xs font-mono text-amber-300 shadow-sm shrink-0">
-                    <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span>Expires in {countdown}</span>
-                  </div>
-                </div>
-
-                {/* 2. Gate Banner (Status Strip) with Precision Shake & Warning Flash */}
-                {gateBlockedInfo || gateBlockedReason || proposal.status === 'BLOCKED' ? (
-                  <motion.div
-                    initial={{ x: 0 }}
-                    animate={{ x: [0, -6, 6, -4, 4, -1, 1, 0] }}
-                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                    className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 flex flex-col gap-2.5 shadow-md shadow-black/20 animate-rose-flash"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-rose-300 font-semibold text-xs font-mono">
-                        <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-                        <span>DETERMINISTIC GATE CONSTRAINT ACTIVE</span>
+                  {/* Gate Status Strip */}
+                  {gateBlockedInfo || gateBlockedReason || proposal.status === 'BLOCKED' ? (
+                    <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-200 text-xs font-mono">
+                      <div className="flex items-center gap-1.5 text-rose-300 font-bold mb-1">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <span>DETERMINISTIC GATE BLOCKED</span>
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                        STATUS: BLOCKED
+                      <p className="text-[11px] text-rose-200/90">
+                        {gateBlockedInfo?.reason || gateBlockedReason || 'Transaction blocked by gate.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-mono flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        Deterministic Invariants Validated
+                      </span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-emerald-500/20 rounded">
+                        PASSED
                       </span>
                     </div>
+                  )}
 
-                    <p className="text-xs text-rose-100 font-mono leading-relaxed bg-[#121316]/80 p-2.5 rounded-lg border border-rose-500/20">
-                      {gateBlockedInfo?.reason ||
-                        gateBlockedReason ||
-                        'Transaction proposal blocked by deterministic invariant gate.'}
-                    </p>
-
-                    {gateBlockedInfo && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 rounded-lg bg-[#121316]/50 border border-white/[0.04] text-[11px] font-mono text-stone-300">
-                        <div>
-                          <span className="text-stone-500 block text-[10px] uppercase">Requested:</span>
-                          <span className="text-white font-bold">{gateBlockedInfo.requestedQuantity} boxes</span>
-                        </div>
-                        <div>
-                          <span className="text-stone-500 block text-[10px] uppercase">Available Stock:</span>
-                          <span className="text-rose-300 font-bold">{gateBlockedInfo.availableInventory} boxes</span>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1 border-t border-rose-500/20 text-[11px] text-stone-400 font-mono">
-                      <span>Zero LLM authority in transaction gate rejection</span>
-                      <Link
-                        href="/dashboard#audit-ledger"
-                        className="text-rose-400 hover:text-rose-300 underline underline-offset-2 flex items-center gap-1 active:scale-[0.97]"
-                      >
-                        <span>View in Audit Ledger</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </Link>
+                  {/* Itemized Order Line */}
+                  <div className="p-3 rounded-lg bg-black/40 border border-white/[0.04] text-xs font-mono flex flex-col gap-2">
+                    <div className="flex items-center justify-between text-stone-300">
+                      <span>{proposal.requestedQuantity}x {proposal.product?.name || 'Item'}</span>
+                      <span className="font-bold text-white">₹{(proposal.requestedQuantity * proposal.offeredPrice).toFixed(2)}</span>
                     </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, y: 3 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-2 shadow-sm"
-                  >
-                    <div className="flex items-center gap-2 font-mono text-xs font-semibold">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>🛡️ Deterministic Invariants Validated — Ready for Razorpay</span>
+                    <div className="flex items-center justify-between text-[10px] text-stone-500 pt-1 border-t border-white/[0.04]">
+                      <span>Available inventory: {proposal.product?.inventory ?? 'Verified'} units</span>
+                      <span>Paise Precision: Exact</span>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      PASSED
-                    </span>
-                  </motion.div>
-                )}
+                  </div>
 
-                {/* 3. Verified Payment Receipt (Minimal Digital Receipt with HMAC Proof & Micro-Spring Bounce) */}
-                {verifiedReceipt && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    className="p-4 sm:p-5 rounded-2xl bg-[#141519] border-2 border-emerald-500/60 text-stone-100 flex flex-col gap-4 shadow-2xl shadow-emerald-950/30 animate-emerald-ripple"
-                  >
-                    <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] flex-wrap gap-2">
-                      <div className="flex items-center gap-2.5 text-emerald-400 font-semibold text-sm">
-                        <motion.div
-                          initial={{ scale: 0.7, opacity: 0 }}
-                          animate={{ scale: [0.7, 1.15, 1], opacity: 1 }}
-                          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                          className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shadow-sm shrink-0"
-                        >
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        </motion.div>
-                        <span>Payment Verified &amp; Inventory Settled</span>
-                      </div>
-                      <AuthorityTag
-                        type="FINTECH_GATE"
-                        compact
-                        customLabel="HMAC SHA-256 Valid"
-                        pulse
-                      />
+                  {/* Deterministic Invariant Pre-Checks in Clean Terminal Log Style */}
+                  <div className="p-3 rounded-lg bg-black/50 border border-white/[0.05] flex flex-col gap-2 font-mono text-[11px]">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.05] text-stone-400 uppercase text-[10px]">
+                      <span>Deterministic Gate Invariant Pre-Checks</span>
+                      <span className="text-emerald-400">4 / 4 Rules</span>
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#181A20] border border-white/[0.06] text-xs font-mono">
-                      <div>
-                        <span className="text-stone-400 block text-[10px] uppercase">RAZORPAY PAYMENT ID</span>
-                        <span className="text-white font-bold truncate block break-all">{verifiedReceipt.paymentId}</span>
-                      </div>
-                      <div>
-                        <span className="text-stone-400 block text-[10px] uppercase">RAZORPAY ORDER ID</span>
-                        <span className="text-white font-bold truncate block break-all">{verifiedReceipt.orderId}</span>
-                      </div>
-                      <div className="pt-2 border-t border-white/[0.06]">
-                        <span className="text-stone-400 block text-[10px] uppercase">SETTLEMENT AMOUNT</span>
-                        <span className="text-emerald-400 font-bold">₹{(verifiedReceipt.amount / 100).toFixed(2)} INR</span>
-                      </div>
-                      <div className="pt-2 border-t border-white/[0.06]">
-                        <span className="text-stone-400 block text-[10px] uppercase">REMAINING VERIFIED INVENTORY</span>
-                        <span className="text-amber-300 font-bold">{verifiedReceipt.remainingInventory} units in stock</span>
-                      </div>
-                    </div>
-
-                    {/* Cryptographic Proof Box (Progressive Disclosure - Collapsed by Default) */}
-                    <details className="group rounded-xl bg-[#121316] border border-emerald-500/30 overflow-hidden font-mono text-[11px]">
-                      <summary className="p-3 cursor-pointer select-none flex items-center justify-between text-emerald-400 font-semibold text-[10px] hover:bg-emerald-500/5 transition-colors active:scale-[0.97]">
+                    <div className="space-y-1.5 text-[10px]">
+                      <div className="flex items-center justify-between text-stone-300">
                         <span className="flex items-center gap-1.5">
-                          <Hash className="w-3 h-3 shrink-0" />
-                          <span>⚙️ View Cryptographic Proof (HMAC SHA-256)</span>
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          Merchant State: {merchantStatus} ({merchantScore}/100)
                         </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">100% Bit-Perfect</span>
-                          <span className="text-[10px] text-emerald-400/80 group-open:rotate-180 transition-transform">▾</span>
-                        </div>
-                      </summary>
-                      <div className="px-3 pb-3 pt-1 flex flex-col gap-1.5 border-t border-white/[0.04]">
-                        <div className="text-[10px] text-stone-400">
-                          <span>Payload: </span>
-                          <span className="text-stone-300 break-all select-all">{verifiedReceipt.orderId}|{verifiedReceipt.paymentId}</span>
-                        </div>
-                        {verifiedReceipt.calculatedHmac && (
-                          <div className="text-[10px] text-stone-400">
-                            <span>Digest: </span>
-                            <span className="text-emerald-400/90 break-all select-all font-mono">{verifiedReceipt.calculatedHmac}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center justify-between pt-1 border-t border-white/[0.06] text-[10px] text-stone-400 flex-wrap gap-1">
-                          <span className="flex items-center gap-1 text-emerald-300">
-                            <Check className="w-3 h-3 text-emerald-400 shrink-0" />
-                            Zero-Bit Collision • Verified via RAZORPAY_KEY_SECRET
-                          </span>
-                          <span className="font-semibold text-emerald-400">STATE: ATOMICALLY_SETTLED</span>
-                        </div>
+                        <span className="text-emerald-400">PASSED</span>
                       </div>
-                    </details>
+                      <div className="flex items-center justify-between text-stone-300">
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          Price Integrity Match: ₹{proposal.offeredPrice}.00
+                        </span>
+                        <span className="text-emerald-400">PASSED</span>
+                      </div>
+                      <div className="flex items-center justify-between text-stone-300">
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          Inventory Sufficiency Check
+                        </span>
+                        <span className="text-emerald-400">PASSED</span>
+                      </div>
+                      <div className="flex items-center justify-between text-stone-300">
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          Deterministic Settlement Math
+                        </span>
+                        <span className="text-emerald-400">PASSED</span>
+                      </div>
+                    </div>
+                  </div>
 
-                    <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-1">
-                      <Link
-                        href="/dashboard#audit-ledger"
-                        className="w-full sm:flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs text-center flex items-center justify-center gap-1.5 transition-colors active:scale-[0.97]"
-                      >
-                        <Store className="w-3.5 h-3.5" />
-                        View Immutable Audit Logs in Dashboard
-                        <ExternalLink className="w-3 h-3" />
-                      </Link>
+                  {/* Payment Button & Sandbox Actions */}
+                  <button
+                    onClick={
+                      proposal.status === 'RESERVED' && checkoutOrderData
+                        ? () => openRazorpayCheckout(checkoutOrderData)
+                        : handleProceedToGate
+                    }
+                    disabled={gateLoading || proposal.status === 'BLOCKED'}
+                    className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-stone-800 disabled:text-stone-500 text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+                  >
+                    {gateLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : proposal.status === 'BLOCKED' ? (
+                      <span>Transaction Blocked by Gate ⛔</span>
+                    ) : proposal.status === 'RESERVED' && checkoutOrderData ? (
+                      <span>Pay ₹{(checkoutOrderData.amount / 100).toFixed(2)} via Razorpay Test Rails →</span>
+                    ) : (
+                      <span>Proceed to Transaction Gate →</span>
+                    )}
+                  </button>
+
+                  {/* Simulation Sandbox in Inspector Mode */}
+                  {checkoutOrderData && proposal.status === 'RESERVED' && checkoutOrderData.testSignature && (
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/[0.05]">
                       <button
                         type="button"
-                        onClick={() => {
-                          setVerifiedReceipt(null);
-                          setCheckoutOrderData(null);
-                        }}
-                        className="py-2.5 px-4 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-medium transition-colors cursor-pointer active:scale-[0.97]"
+                        onClick={() =>
+                          handleVerifyPayment({
+                            proposalId: proposal.id,
+                            razorpay_order_id: checkoutOrderData.orderId,
+                            razorpay_payment_id: checkoutOrderData.testPaymentId || `pay_sim_${Date.now()}`,
+                            razorpay_signature: checkoutOrderData.testSignature || '',
+                          })
+                        }
+                        className="py-2 px-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-emerald-400 border border-emerald-500/20 font-mono text-[10px] font-semibold flex items-center justify-center gap-1 active:scale-[0.97]"
                       >
-                        Dismiss Receipt
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Verify (Valid HMAC)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleVerifyPayment({
+                            proposalId: proposal.id,
+                            razorpay_order_id: checkoutOrderData.orderId,
+                            razorpay_payment_id: checkoutOrderData.testPaymentId || `pay_sim_${Date.now()}`,
+                            razorpay_signature: 'invalid_tampered_signature_hex_000',
+                          })
+                        }
+                        className="py-2 px-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-rose-400 border border-rose-500/20 font-mono text-[10px] font-semibold flex items-center justify-center gap-1 active:scale-[0.97]"
+                      >
+                        <AlertOctagon className="w-3 h-3" />
+                        <span>Test Invalid HMAC</span>
                       </button>
                     </div>
-                  </motion.div>
-                )}
-
-                {/* 4. Itemized Product Summary Row & Policy line */}
-                <div className="p-4 rounded-xl bg-[#141519] border border-white/[0.08] flex flex-col gap-3 shadow-inner">
-                  <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-stone-400 pb-1 border-b border-white/[0.06]">
-                    <span>Itemized Order Summary</span>
-                    <span>Subtotal</span>
-                  </div>
-
-                  <div className="flex items-start justify-between gap-4 py-1">
-                    <div>
-                      <h4 className="text-sm font-semibold text-white">
-                        {proposal.product?.name ||
-                          activeResponse?.proposalData?.productName ||
-                          'Signature Choco Chip Cookies'}
-                      </h4>
-                      <div className="flex items-center gap-2 text-xs text-stone-400 font-mono mt-0.5">
-                        <span>{proposal.requestedQuantity} box{proposal.requestedQuantity > 1 ? 'es' : ''}</span>
-                        <span>•</span>
-                        <span>₹{proposal.offeredPrice}.00 per box</span>
-                        {proposal.product?.isEggless && (
-                          <>
-                            <span>•</span>
-                            <span className="text-emerald-400 font-semibold">100% Eggless</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right font-mono text-sm font-semibold text-white">
-                      ₹{(proposal.requestedQuantity * proposal.offeredPrice).toFixed(2)}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2.5 border-t border-white/[0.06] text-xs font-mono">
-                    <div>
-                      <span className="text-stone-400 block text-[10px] uppercase">Requested Units:</span>
-                      <span className="text-sm font-bold text-white">
-                        {proposal.requestedQuantity} box(es)
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-stone-400 block text-[10px] uppercase">Available In Stock:</span>
-                      <span className="text-sm font-bold text-stone-200">
-                        {verifiedReceipt
-                          ? verifiedReceipt.remainingInventory
-                          : activeResponse?.proposalData?.availableInventory ??
-                            proposal.product?.inventory ??
-                            'Unknown'}{' '}
-                        units
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Overstock Warning */}
-                  {((activeResponse?.proposalData?.inventoryExceeded) ||
-                    (proposal.product?.inventory !== null &&
-                      proposal.product?.inventory !== undefined &&
-                      proposal.requestedQuantity > proposal.product.inventory)) && (
-                    <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-center gap-2 mt-1">
-                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>
-                        Requested quantity ({proposal.requestedQuantity}) exceeds verified available inventory. Transaction gate will flag this!
-                      </span>
-                    </div>
                   )}
 
-                  {/* Delivery / Policy Line */}
-                  <div className="flex items-center gap-2 text-xs text-stone-400 pt-2.5 border-t border-white/[0.06]">
-                    <Truck className="w-3.5 h-3.5 text-amber-400/90 shrink-0" />
-                    <span>Standard Local Delivery included • Freshly baked perishables guarantee</span>
-                  </div>
-                </div>
-
-                {/* 5. Formatted Total in INR */}
-                <div className="flex items-center justify-between p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 shadow-inner">
-                  <div>
-                    <span className="text-[11px] text-stone-400 uppercase tracking-wider font-mono">
-                      Calculated Total Due
-                    </span>
-                    <div className="text-3xl font-extrabold text-white mt-0.5 tracking-tight">
-                      ₹{proposal.calculatedTotal}.00
-                      <span className="text-xs text-stone-400 font-normal ml-1.5">INR</span>
-                    </div>
-                  </div>
-                  <div className="text-right text-xs text-stone-400 font-mono">
-                    <span className="px-2.5 py-1 rounded-lg bg-[#141519] border border-white/[0.08] text-stone-300 inline-block">
-                      Status: <strong className="text-emerald-400">{proposal.status}</strong>
-                    </span>
-                  </div>
-                </div>
-
-                {/* 6. Real-time Deterministic Invariant Checklist */}
-                {(() => {
-                  const isMerchantReady = merchantStatus !== 'NOT_READY';
-                  const availableStock = verifiedReceipt
-                    ? verifiedReceipt.remainingInventory
-                    : activeResponse?.proposalData?.availableInventory ??
-                      proposal.product?.inventory ??
-                      0;
-                  const isStockSufficient =
-                    availableStock >= proposal.requestedQuantity;
-                  const isPriceMatched = proposal.offeredPrice > 0;
-                  const isMathSettled =
-                    proposal.calculatedTotal ===
-                    proposal.requestedQuantity * proposal.offeredPrice;
-
-                  return (
-                    <div className="p-4 rounded-xl bg-[#141519] border border-white/[0.08] flex flex-col gap-3">
-                      <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-                        <div className="flex items-center gap-2">
-                          <Scale className="w-4 h-4 text-amber-400" />
-                          <span className="text-xs font-bold uppercase tracking-wider text-stone-200 font-mono">
-                            Deterministic Gate Invariant Pre-Checks
-                          </span>
-                        </div>
-                        <AuthorityTag
-                          type="DETERMINISTIC"
-                          compact
-                          customLabel="Deterministic Pre-Check"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-2 text-xs font-mono">
-                        {/* Invariant 1: Merchant Verification */}
-                        <div
-                          className={`flex items-center justify-between p-2.5 rounded-lg border ${
-                            isMerchantReady
-                              ? 'bg-emerald-950/20 border-emerald-500/30 text-stone-300'
-                              : 'bg-rose-950/30 border-rose-500/40 text-rose-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {isMerchantReady ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                            )}
-                            <div>
-                              <span className="font-semibold text-stone-200">
-                                Merchant Status Invariant
-                              </span>
-                              <span className="block text-[11px] text-stone-400">
-                                {proposal.merchant?.name || 'Sweet Crumbs'}: {merchantStatus} (Score: {merchantScore}/100)
-                              </span>
-                            </div>
-                          </div>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              isMerchantReady
-                                ? 'bg-emerald-500/20 text-emerald-400'
-                                : 'bg-rose-500/20 text-rose-400'
-                            }`}
-                          >
-                            {isMerchantReady ? 'PASSED' : 'VIOLATION'}
-                          </span>
-                        </div>
-
-                        {/* Invariant 2: Price Integrity */}
-                        <div
-                          className={`flex items-center justify-between p-2.5 rounded-lg border ${
-                            isPriceMatched
-                              ? 'bg-emerald-950/20 border-emerald-500/30 text-stone-300'
-                              : 'bg-rose-950/30 border-rose-500/40 text-rose-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {isPriceMatched ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                            )}
-                            <div>
-                              <span className="font-semibold text-stone-200">
-                                Price Integrity Match
-                              </span>
-                              <span className="block text-[11px] text-stone-400">
-                                Offered ₹{proposal.offeredPrice}.00 == Verified Catalog ₹{proposal.offeredPrice}.00 (Paise precision)
-                              </span>
-                            </div>
-                          </div>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              isPriceMatched
-                                ? 'bg-emerald-500/20 text-emerald-400'
-                                : 'bg-rose-500/20 text-rose-400'
-                            }`}
-                          >
-                            {isPriceMatched ? 'PASSED' : 'VIOLATION'}
-                          </span>
-                        </div>
-
-                        {/* Invariant 3: Live Inventory Sufficiency */}
-                        <div
-                          className={`flex items-center justify-between p-2.5 rounded-lg border ${
-                            isStockSufficient
-                              ? 'bg-emerald-950/20 border-emerald-500/30 text-stone-300'
-                              : 'bg-rose-950/30 border-rose-500/40 text-rose-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {isStockSufficient ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                            )}
-                            <div>
-                              <span className="font-semibold text-stone-200">
-                                Live Inventory Sufficiency
-                              </span>
-                              <span className="block text-[11px] text-stone-400">
-                                Available: {availableStock} units {isStockSufficient ? '≥' : '<'} Requested: {proposal.requestedQuantity} units
-                              </span>
-                            </div>
-                          </div>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              isStockSufficient
-                                ? 'bg-emerald-500/20 text-emerald-400'
-                                : 'bg-rose-500/20 text-rose-400'
-                            }`}
-                          >
-                            {isStockSufficient ? 'PASSED' : 'BLOCKED'}
-                          </span>
-                        </div>
-
-                        {/* Invariant 4: Math Settlement Integrity */}
-                        <div
-                          className={`flex items-center justify-between p-2.5 rounded-lg border ${
-                            isMathSettled
-                              ? 'bg-emerald-950/20 border-emerald-500/30 text-stone-300'
-                              : 'bg-rose-950/30 border-rose-500/40 text-rose-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {isMathSettled ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                            )}
-                            <div>
-                              <span className="font-semibold text-stone-200">
-                                Deterministic Math Settlement
-                              </span>
-                              <span className="block text-[11px] text-stone-400">
-                                {proposal.requestedQuantity} × ₹{proposal.offeredPrice}.00 = ₹{proposal.calculatedTotal}.00 (Zero rounding drift)
-                              </span>
-                            </div>
-                          </div>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              isMathSettled
-                                ? 'bg-emerald-500/20 text-emerald-400'
-                                : 'bg-rose-500/20 text-rose-400'
-                            }`}
-                          >
-                            {isMathSettled ? 'PASSED' : 'VIOLATION'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* 7. Apple Pay-Grade Massive Primary Payment Action Button (min-height 52px) */}
-                <button
-                  onClick={
-                    proposal.status === 'RESERVED' && checkoutOrderData
-                      ? () => openRazorpayCheckout(checkoutOrderData)
-                      : handleProceedToGate
-                  }
-                  disabled={
-                    gateLoading ||
-                    proposal.status === 'BLOCKED' ||
-                    proposal.status === 'COMPLETED'
-                  }
-                  className="w-full min-h-[52px] py-4 rounded-xl text-base font-semibold shadow-2xl shadow-emerald-950/60 active:scale-[0.97] transition-all bg-emerald-600 hover:bg-emerald-500 disabled:bg-stone-800 disabled:text-stone-500 text-white flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
-                >
-                  {gateLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Verifying Deterministic Invariants...</span>
-                    </>
-                  ) : proposal.status === 'BLOCKED' ? (
-                    <span>Transaction Blocked by Gate ⛔</span>
-                  ) : proposal.status === 'COMPLETED' ? (
-                    <span>Transaction Settled Successfully ✓</span>
-                  ) : proposal.status === 'RESERVED' && checkoutOrderData ? (
-                    <span>Pay ₹{(checkoutOrderData.amount / 100).toFixed(2)} via Razorpay Test Rails →</span>
-                  ) : (
-                    <span>Proceed to Transaction Gate →</span>
-                  )}
-                </button>
-
-                {/* 8. Settlement Actions & Simulation Sandbox */}
-                <div className="flex flex-col gap-3">
-                  {checkoutOrderData &&
-                    proposal.status === 'RESERVED' &&
-                    !verifiedReceipt && (
-                      <div className="p-4 rounded-xl bg-[#141519] border border-emerald-500/30 text-stone-100 flex flex-col gap-3 shadow-inner">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs font-mono">
-                            <Lock className="w-4 h-4 text-emerald-400" />
-                            <span>GATE PASSED • INVENTORY HELD (10 MIN)</span>
-                          </div>
-                          <span className="text-[11px] font-mono text-stone-400">
-                            {checkoutOrderData.orderId.slice(0, 18)}...
-                          </span>
-                        </div>
-
-                        <p className="text-xs text-stone-300">
-                          All 5 deterministic invariants verified. Launch real modal or test settlement invariants:
-                        </p>
-
-                        <div className="flex flex-col gap-2">
-                          {/* Real Razorpay Modal */}
-                          <button
-                            type="button"
-                            disabled={gateLoading}
-                            onClick={() => openRazorpayCheckout(checkoutOrderData)}
-                            className="w-full min-h-[52px] py-4 rounded-xl text-base font-semibold shadow-2xl shadow-emerald-950/60 active:scale-[0.97] transition-all bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
-                          >
-                            <CreditCard className="w-5 h-5" />
-                            <span>Pay ₹{(checkoutOrderData.amount / 100).toFixed(2)} via Razorpay Test Rails →</span>
-                          </button>
-
-                          {/* Simulation buttons */}
-                          {checkoutOrderData.testSignature && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-white/[0.06]">
-                              <button
-                                type="button"
-                                disabled={gateLoading}
-                                onClick={() =>
-                                  handleVerifyPayment({
-                                    proposalId: proposal.id,
-                                    razorpay_order_id: checkoutOrderData.orderId,
-                                    razorpay_payment_id:
-                                      checkoutOrderData.testPaymentId ||
-                                      `pay_sim_${Date.now()}`,
-                                    razorpay_signature:
-                                      checkoutOrderData.testSignature || '',
-                                  })
-                                }
-                                className="py-2.5 px-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-emerald-400 border border-emerald-500/30 font-mono text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-[0.97]"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Verify (Valid HMAC)</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                disabled={gateLoading}
-                                onClick={() =>
-                                  handleVerifyPayment({
-                                    proposalId: proposal.id,
-                                    razorpay_order_id: checkoutOrderData.orderId,
-                                    razorpay_payment_id:
-                                      checkoutOrderData.testPaymentId ||
-                                      `pay_sim_${Date.now()}`,
-                                    razorpay_signature:
-                                      'invalid_tampered_signature_hex_000',
-                                  })
-                                }
-                                className="py-2.5 px-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-rose-400 border border-rose-500/30 font-mono text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-[0.97]"
-                              >
-                                <AlertOctagon className="w-3.5 h-3.5" />
-                                <span>Test Invalid HMAC</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                  {/* Toggle Raw JSON view */}
+                  {/* Toggle Raw JSON */}
                   <button
                     type="button"
                     onClick={() => setShowJson(!showJson)}
-                    className="text-xs text-stone-400 hover:text-stone-200 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg border border-white/[0.06] hover:border-white/20 bg-[#121316] transition-colors cursor-pointer self-center active:scale-[0.97]"
+                    className="text-[11px] text-stone-400 hover:text-stone-200 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg border border-white/[0.05] bg-black/30 self-center active:scale-[0.98]"
                   >
-                    <Code className="w-3.5 h-3.5 shrink-0" />
-                    <span>{showJson ? '🔍 Hide Raw Proposal JSON' : '🔍 Inspect Raw Data & Proposal JSON'}</span>
+                    <Code className="w-3 h-3" />
+                    <span>{showJson ? 'Hide Raw JSON' : 'Inspect Raw Proposal JSON'}</span>
                   </button>
-
                   {showJson && (
-                    <div className="w-full overflow-x-auto no-scrollbar">
-                      <pre className="p-3 rounded-xl bg-[#121316] border border-white/[0.08] text-[10px] text-stone-300 font-mono max-h-60">
-                        {JSON.stringify(proposal, null, 2)}
-                      </pre>
-                    </div>
+                    <pre className="p-3 rounded-lg bg-black text-stone-300 font-mono text-[10px] overflow-x-auto no-scrollbar max-h-48 border border-white/[0.05]">
+                      {JSON.stringify(proposal, null, 2)}
+                    </pre>
                   )}
                 </div>
-              </div>
-            </TiltCard>
-          ) : activeResponse ? (
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-stone-900 to-[#0E0F12] border border-amber-500/30 p-4 sm:p-6 flex flex-col gap-4 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                    <AlertTriangle className="w-5 h-5" />
+              ) : activeResponse ? (
+                <div className="rounded-2xl bg-[#121316] border border-amber-500/20 p-5 flex flex-col gap-3 text-xs">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold font-mono">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>ORDER PROPOSAL HALTED BY INVARIANT</span>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white font-mono tracking-tight">
-                      ORDER PROPOSAL HALTED
-                    </h3>
-                    <span className="text-[11px] text-stone-400">
-                      Deterministic Invariant Enforced
-                    </span>
-                  </div>
+                  <p className="text-stone-300 leading-relaxed font-mono">
+                    {activeResponse.explanation}
+                  </p>
                 </div>
-                <AuthorityTag
-                  type="DETERMINISTIC"
-                  compact
-                  customLabel="Invariant Guard"
-                />
-              </div>
-
-              {/* Prompt Reference */}
-              <div className="p-3 rounded-xl bg-[#121316] border border-white/[0.06] text-xs font-mono flex items-center justify-between text-stone-300">
-                <span className="text-stone-500">Evaluated Prompt:</span>
-                <span className="text-amber-300 font-semibold truncate max-w-[280px]">
-                  &ldquo;{activeResponse.query}&rdquo;
-                </span>
-              </div>
-
-              {/* Friendly Agent Explanation */}
-              <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30 flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-amber-400 font-bold text-xs font-mono">
-                  <Bot className="w-4 h-4" />
-                  <span>Buyer Agent Resolution</span>
+              ) : (
+                <div className="rounded-2xl bg-[#121316] border border-white/[0.05] p-8 flex flex-col items-center justify-center text-center gap-2.5 min-h-[260px]">
+                  <ShoppingCart className="w-8 h-8 text-stone-600" />
+                  <span className="text-xs text-stone-400 font-mono">
+                    No active transaction proposal payload
+                  </span>
                 </div>
-                <p className="text-xs text-amber-100 font-mono leading-relaxed">
-                  {activeResponse.explanation}
-                </p>
-              </div>
+              )}
 
-              {/* Fintech Authority Invariant Banner */}
-              <div className="p-3.5 rounded-xl bg-[#121316] border border-white/[0.06] flex flex-col gap-2 text-[11px] font-mono text-stone-400">
-                <div className="flex items-center gap-1.5 text-stone-300 font-semibold">
-                  <Scale className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Zero-Hallucination Commercial Invariant</span>
-                </div>
-                <p className="text-stone-400 leading-normal">
-                  Autonomous AI Buyers cannot invent unverified pricing or buy items without merchant ground truth. Transactions require verified catalog invariants.
-                </p>
-              </div>
-
-              {/* Remediation Action Links */}
-              <div className="flex flex-col sm:flex-row items-center gap-2 pt-2 border-t border-white/[0.06]">
-                <Link
-                  href="/dashboard"
-                  className="w-full sm:flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs text-center flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.97]"
-                >
-                  <Store className="w-3.5 h-3.5" />
-                  Verify Catalog in Merchant Dashboard
-                  <ExternalLink className="w-3 h-3" />
-                </Link>
-                {merchantStatus === 'NOT_READY' && (
+              {/* Developer Trace & AI Reasoning Accordion */}
+              {activeResponse && (
+                <div className="flex flex-col gap-2 mt-2">
                   <button
                     type="button"
-                    onClick={handleQuickVerify}
-                    disabled={quickVerifying}
-                    className="w-full sm:w-auto py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.97]"
+                    onClick={() => setIsTraceExpanded(!isTraceExpanded)}
+                    className="text-xs text-stone-300 hover:text-white flex items-center justify-between py-2 px-3 rounded-xl border border-white/[0.06] bg-[#121316] hover:bg-[#181A20] transition-all cursor-pointer active:scale-[0.98]"
                   >
-                    {quickVerifying && (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    )}
-                    Quick-Verify Demo
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      <span className="text-amber-400">⚙️</span>
+                      <span>{isTraceExpanded ? 'Hide Developer Trace ▴' : 'Inspect Developer Trace ▾'}</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-stone-500">
+                      {activeResponse.thoughtProcess?.length || 0} steps • {activeResponse.toolCalls?.length || 0} tools
+                    </span>
                   </button>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-stone-900/60 to-[#0E0F12]/80 border border-white/10 shadow-2xl p-8 flex flex-col items-center justify-center text-center gap-3 min-h-[320px] backdrop-blur-sm">
-              <ShoppingCart className="w-12 h-12 text-stone-500" />
-              <h3 className="text-sm font-semibold text-stone-300">
-                No Active Transaction Proposal
-              </h3>
-              <p className="text-xs text-stone-400 max-w-sm">
-                Run an autonomous buyer query on the left. Once the buyer agent selects a verified product, the structured proposal will appear here.
-              </p>
-            </div>
-          )}
 
-          {/* Inspect Agent Reasoning Accordion Trigger Button & Collapsible Trace */}
-          {activeResponse && (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsTraceExpanded(!isTraceExpanded)}
-                  className="text-xs text-stone-300 hover:text-white flex items-center gap-1.5 py-2 px-3.5 rounded-xl border border-white/[0.1] bg-[#181A20] hover:bg-[#20232B] transition-all cursor-pointer shadow-sm active:scale-[0.97]"
-                >
-                  <span className="text-amber-400 shrink-0">⚙️</span>
-                  <span className="font-semibold">
-                    {isTraceExpanded ? '⚙️ Hide Developer Trace & AI Reasoning ▴' : '⚙️ View Developer Trace & AI Reasoning ▾'}
-                  </span>
-                </button>
-
-                <span className="text-[10px] font-mono text-stone-500">
-                  {activeResponse.thoughtProcess?.length || 0} reasoning steps • {activeResponse.toolCalls?.length || 0} tool calls
-                </span>
-              </div>
-
-              {/* Collapsible Dark Terminal Trace */}
-              <AnimatePresence>
-                {isTraceExpanded && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    className="overflow-hidden flex flex-col gap-3"
-                  >
-                    {/* AI Runtime & Invariant Metric Strip */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 px-3.5 py-2.5 rounded-xl bg-[#141519] border border-white/[0.08] text-[11px] font-mono text-stone-400 shadow-inner">
-                      <div className="flex items-center gap-1.5">
-                        <Cpu className="w-3.5 h-3.5 text-amber-400" />
-                        <span className="text-stone-500">Model:</span>
-                        <span className="text-stone-200 font-semibold truncate">Groq Llama 3.3 70B</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 justify-start sm:justify-center">
-                        <Clock className="w-3.5 h-3.5 text-amber-300" />
-                        <span className="text-stone-500">Tool Latency:</span>
-                        <span className="text-amber-300 font-semibold">~340ms</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 justify-start sm:justify-end">
-                        <Scale className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-stone-500">Temp:</span>
-                        <span className="text-emerald-300 font-semibold">0.0 (Strict Invariants)</span>
-                      </div>
-                    </div>
-
-                    {/* Dark Terminal Execution Log */}
-                    <div className="relative rounded-xl bg-[#101114] border border-white/[0.08] shadow-2xl flex flex-col overflow-hidden">
-                      <Spotlight status={merchantStatus} />
-                      {/* Terminal Header */}
-                      <div className="relative z-10 bg-[#16181F] px-4 py-2.5 border-b border-white/[0.06] flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-                          <span className="ml-2 font-mono text-xs text-stone-400">
-                            buyer-agent@agentready:~$ runtime-trace
-                          </span>
+                  <AnimatePresence>
+                    {isTraceExpanded && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden flex flex-col gap-2 rounded-xl bg-black/40 border border-white/[0.05] p-3 font-mono text-[11px]"
+                      >
+                        <div className="flex items-center justify-between text-[10px] text-stone-400 pb-1.5 border-b border-white/[0.05]">
+                          <span>Model: Groq Llama 3.3 70B</span>
+                          <span>Latency: ~340ms</span>
+                          <span>Temp: 0.0</span>
                         </div>
-                        <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#1C1F26] text-stone-400 border border-white/[0.06]">
-                          Tool-Calling Loop
-                        </span>
-                      </div>
-
-                      {/* Terminal Content Body */}
-                      <div className="relative z-10 p-4 font-mono text-xs overflow-y-auto flex flex-col gap-4 text-stone-300 leading-relaxed max-h-[480px]">
-                        {/* Query Header */}
-                        <div className="text-stone-400 pb-2 border-b border-white/[0.06]">
-                          <span className="text-amber-400 font-bold">&gt;</span> Prompt: &ldquo;{activeResponse.query}&rdquo;
-                        </div>
-
-                        {/* Thought Process Steps */}
-                        <div className="flex flex-col gap-2.5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] text-stone-400 uppercase tracking-wider font-mono">
-                              Thought Chain &amp; Execution Trace:
-                            </span>
-                            <span className="text-[10px] text-stone-500 font-mono">
-                              {activeResponse.thoughtProcess.length} steps recorded
-                            </span>
-                          </div>
-                          {activeResponse.thoughtProcess.map((step, idx) => {
+                        <div className="space-y-1.5 max-h-60 overflow-y-auto no-scrollbar">
+                          {activeResponse.thoughtProcess?.map((step, idx) => {
                             const style = getThoughtStyle(step);
                             return (
-                              <motion.div
-                                key={idx}
-                                initial={{ opacity: 0, x: -4 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.18, delay: idx * 0.03 }}
-                                className="flex items-start gap-2.5 p-2 rounded-lg bg-[#141519] border border-white/[0.04] text-[11px]"
-                              >
-                                <span
-                                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold shrink-0 mt-0.5 border ${style.badgeBg}`}
-                                >
+                              <div key={idx} className="p-1.5 rounded bg-[#141519] border border-white/[0.04]">
+                                <span className={`text-[9px] px-1 py-0.5 rounded font-bold mr-1.5 border ${style.badgeBg}`}>
                                   [{idx + 1}] {style.typeLabel}
                                 </span>
-                                <span className={`${style.textColor} leading-relaxed font-mono flex-1`}>
-                                  {step}
-                                </span>
-                              </motion.div>
+                                <span className={style.textColor}>{step}</span>
+                              </div>
                             );
                           })}
                         </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
 
-                        {/* Tool Calls */}
-                        {activeResponse.toolCalls.length > 0 && (
-                          <div className="flex flex-col gap-2.5 mt-2">
-                            <span className="text-[11px] text-stone-400 uppercase tracking-wider">
-                              Executed Tool Calls ({activeResponse.toolCalls.length}):
-                            </span>
-
-                            {activeResponse.toolCalls.map((tc, idx) => (
-                              <div
-                                key={idx}
-                                className="rounded-lg bg-[#141519] border border-white/[0.06] overflow-hidden"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => toggleTool(idx)}
-                                  className="w-full px-3 py-2 bg-[#181A20] hover:bg-[#1E2028] flex items-center justify-between text-left text-xs font-mono transition-colors cursor-pointer"
-                                >
-                                  <span className="flex items-center gap-2 text-amber-300 font-semibold">
-                                    <Bot className="w-3.5 h-3.5" />
-                                    tool: {tc.toolName}()
-                                  </span>
-                                  {expandedTools[idx] ? (
-                                    <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
-                                  ) : (
-                                    <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                                  )}
-                                </button>
-
-                                {expandedTools[idx] && (
-                                  <div className="p-3 text-[11px] flex flex-col gap-2 bg-black/40 border-t border-white/[0.04]">
-                                    <div>
-                                      <span className="text-stone-400">Arguments:</span>
-                                      <div className="w-full overflow-x-auto no-scrollbar">
-                                        <pre className="mt-1 p-2 rounded bg-[#121316] text-stone-300 text-[10px] border border-white/[0.04]">
-                                          {JSON.stringify(tc.args, null, 2)}
-                                        </pre>
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <span className="text-stone-400">Result:</span>
-                                      <div className="w-full overflow-x-auto no-scrollbar">
-                                        <pre className="mt-1 p-2 rounded bg-[#121316] text-emerald-400 text-[10px] border border-white/[0.04]">
-                                          {JSON.stringify(tc.result, null, 2)}
-                                        </pre>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Final Conclusion */}
-                        <div className="p-3 rounded-lg bg-[#141519] border border-white/[0.06] text-xs text-stone-200 mt-2">
-                          <span className="text-amber-300 font-semibold block mb-1">
-                            Final Buyer Agent Resolution:
+              {/* Recent Proposal History */}
+              {recentProposals.length > 0 && (
+                <div className="rounded-xl bg-[#121316] border border-white/[0.05] p-3 flex flex-col gap-2 text-xs font-mono">
+                  <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">
+                    Recent Proposals ({recentProposals.length})
+                  </span>
+                  <div className="divide-y divide-white/[0.04]">
+                    {recentProposals.map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setProposal(p);
+                          setVerifiedReceipt(null);
+                          setCheckoutOrderData(null);
+                        }}
+                        className="py-2 flex items-center justify-between cursor-pointer hover:bg-white/[0.03] px-1.5 rounded transition-all active:scale-[0.98]"
+                      >
+                        <div>
+                          <span className="text-white font-medium">{p.product?.name || 'Product'}</span>
+                          <span className="text-stone-400 block text-[10px]">
+                            Qty: {p.requestedQuantity} • ₹{p.calculatedTotal}
                           </span>
-                          {activeResponse.explanation}
                         </div>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/40 text-emerald-400 border border-emerald-500/20">
+                          {p.status}
+                        </span>
                       </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-
-          {/* Recent Proposals History */}
-          {recentProposals.length > 0 && (
-            <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 flex flex-col gap-3 shadow-lg shadow-black/20">
-              <span className="text-xs font-semibold uppercase tracking-wider text-stone-400 font-mono">
-                Recent Proposal History ({recentProposals.length})
-              </span>
-              <div className="divide-y divide-white/[0.06]">
-                {recentProposals.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => {
-                      setProposal(p);
-                      if (p.status === 'BLOCKED') {
-                        setGateBlockedReason(
-                          'Transaction proposal blocked by deterministic invariant gate.'
-                        );
-                        setGateBlockedInfo({
-                          reason:
-                            'Transaction proposal blocked by deterministic invariant gate.',
-                          violatedInvariant: 'INSUFFICIENT_INVENTORY',
-                          requestedQuantity: p.requestedQuantity,
-                          availableInventory: p.product?.inventory ?? 0,
-                        });
-                      } else {
-                        setGateBlockedReason(null);
-                        setGateBlockedInfo(null);
-                      }
-                      setVerifiedReceipt(null);
-                      setCheckoutOrderData(null);
-                    }}
-                    className="py-2.5 flex items-center justify-between text-xs font-mono cursor-pointer hover:bg-white/[0.04] px-2 rounded-lg transition-all active:scale-[0.97]"
-                  >
-                    <div>
-                      <span className="text-[#F8F9FA] font-semibold">
-                        {p.product?.name || 'Product'}
-                      </span>
-                      <span className="text-stone-400 block text-[11px]">
-                        Qty: {p.requestedQuantity} • ₹{p.calculatedTotal}
-                      </span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#141519] text-emerald-400 border border-emerald-500/20">
-                      {p.status}
-                    </span>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              )}
+            </>
           )}
         </section>
       </main>

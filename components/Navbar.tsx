@@ -273,8 +273,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Dedicated Mobile Navigation Strip: Touch-Friendly min 44x44px Tap Targets */}
-      <div className="flex sm:hidden items-center justify-between gap-1.5 px-3 py-2 bg-[#0E0F12]/95 border-t border-white/[0.06] backdrop-blur-md no-scrollbar">
+      {/* Dedicated Mobile Navigation Strip: Sleek Compact Tap Targets */}
+      <div className="flex sm:hidden items-center justify-between gap-1 px-3 py-1.5 bg-[#0E0F12]/95 border-t border-white/[0.06] backdrop-blur-md no-scrollbar">
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
           const Icon = link.icon;
@@ -284,14 +284,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               href={link.href}
               aria-label={link.label}
               title={link.label}
-              className={`relative min-h-[44px] min-w-[44px] flex-1 p-2.5 rounded-xl flex items-center justify-center gap-1.5 text-xs font-medium active:scale-[0.95] transition-all duration-100 ease-out cursor-pointer ${
+              className={`relative min-h-[34px] flex-1 py-1 px-2 rounded-lg flex items-center justify-center gap-1 text-[11px] font-medium active:scale-[0.96] transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
-                  : 'bg-white/[0.03] text-stone-400 border border-white/[0.05] hover:text-white hover:border-white/20'
+                  ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.12)]'
+                  : 'bg-white/[0.02] text-stone-400 border border-white/[0.04] hover:text-white'
               }`}
             >
-              <Icon className="w-4 h-4 shrink-0" />
-              <span className="text-[11px] font-mono font-semibold tracking-wider">
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span className="font-mono font-semibold tracking-wider">
                 {link.shortTag}
               </span>
             </Link>
