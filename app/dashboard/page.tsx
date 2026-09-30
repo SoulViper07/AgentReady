@@ -241,12 +241,47 @@ export default function DashboardPage() {
         console.error(err);
         setStatusMessage('Error loading readiness data');
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          if (typeof window !== 'undefined' && (window.location.hash === '#ledger' || window.location.hash === '#audit-ledger')) {
+            setShowAuditDrawer(true);
+            setTimeout(() => {
+              document.getElementById('ledger')?.scrollIntoView({ behavior: 'smooth' });
+            }, 150);
+          }
+        }
       }
     }
     loadInitial();
     return () => {
       isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleOpenLedger = () => {
+      setShowAuditDrawer(true);
+      setTimeout(() => {
+        const el = document.getElementById('ledger');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    };
+
+    if (typeof window !== 'undefined') {
+      if (window.location.hash === '#ledger' || window.location.hash === '#audit-ledger') {
+        handleOpenLedger();
+      }
+      window.addEventListener('hashchange', handleOpenLedger);
+      window.addEventListener('agentready:open-ledger', handleOpenLedger);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('hashchange', handleOpenLedger);
+        window.removeEventListener('agentready:open-ledger', handleOpenLedger);
+      }
     };
   }, []);
 
@@ -872,8 +907,8 @@ export default function DashboardPage() {
 
         {/* Collapsible Immutable Audit Ledger in Merchant View */}
         {viewMode === 'merchant' && (
-          <div id="audit-ledger" className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
-            <span id="ledger" className="block -mt-24 pt-24" />
+          <div id="ledger" className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4 scroll-mt-24">
+            <span id="audit-ledger" className="block -mt-24 pt-24" />
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2.5">
                 <History className="w-4 h-4 text-stone-400 shrink-0" />
@@ -1624,10 +1659,10 @@ export default function DashboardPage() {
             </section>
 
             {/* Immutable System Audit Ledger (Full in Inspector View) */}
-            <section id="audit-ledger" className="w-full">
-              <span id="ledger" className="block -mt-24 pt-24" />
+            <div id="ledger" className="w-full scroll-mt-24">
+              <span id="audit-ledger" className="block -mt-24 pt-24" />
               <AuditFeed merchantSlug={merchant?.slug || 'sweet-crumbs'} />
-            </section>
+            </div>
           </div>
         )}
       </main>

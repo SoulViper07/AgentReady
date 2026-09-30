@@ -38,7 +38,7 @@ const navLinks = [
     icon: Bot,
   },
   {
-    href: '/dashboard#audit-ledger',
+    href: '/dashboard#ledger',
     label: 'Audit Ledger',
     shortTag: 'LOG',
     icon: History,
@@ -180,13 +180,26 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Desktop Navigation Pills with Smooth Sliding Active Pill Indicator */}
           <nav className="hidden sm:flex items-center gap-1 border-l border-white/[0.08] pl-4 sm:pl-5">
             {navLinks.map((link) => {
-              const isActive = pathname === link.href;
+              const isActive = link.shortTag === 'LOG' ? false : pathname === link.href;
               const Icon = link.icon;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 active:scale-[0.97] tactile-btn ${
+                  onClick={
+                    link.shortTag === 'LOG'
+                      ? (e) => {
+                          e.preventDefault();
+                          router.push('/dashboard#ledger');
+                          const el = document.getElementById('ledger');
+                          if (el) {
+                            el.scrollIntoView({ behavior: 'smooth' });
+                          }
+                          window.dispatchEvent(new Event('agentready:open-ledger'));
+                        }
+                      : undefined
+                  }
+                  className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 active:scale-[0.97] touch-manipulation tactile-btn ${
                     isActive
                       ? 'text-emerald-400'
                       : 'text-stone-400 hover:text-white hover:bg-white/[0.04]'
@@ -243,7 +256,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={handleReset}
             disabled={resetting}
-            className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 tactile-btn text-stone-400 hover:text-rose-400 border border-white/[0.08] transition-all flex items-center justify-center disabled:opacity-50 cursor-pointer shadow-sm shrink-0"
+            className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 touch-manipulation tactile-btn text-stone-400 hover:text-rose-400 border border-white/[0.08] transition-all flex items-center justify-center disabled:opacity-50 cursor-pointer shadow-sm shrink-0"
             title="Reset demo to unverified baseline"
             aria-label="Reset demo to unverified baseline"
           >
@@ -259,7 +272,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 tactile-btn text-stone-400 hover:text-white border border-white/[0.08] transition-all flex items-center justify-center disabled:opacity-50 cursor-pointer shadow-sm shrink-0"
+              className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 touch-manipulation tactile-btn text-stone-400 hover:text-white border border-white/[0.08] transition-all flex items-center justify-center disabled:opacity-50 cursor-pointer shadow-sm shrink-0"
               title="Refresh status"
               aria-label="Refresh status"
             >
@@ -276,22 +289,34 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Dedicated Mobile Navigation Strip: Sleek Compact Tap Targets */}
       <div className="flex sm:hidden items-center justify-between gap-1 px-3 py-1.5 bg-[#0E0F12]/95 border-t border-white/[0.06] backdrop-blur-md no-scrollbar">
         {navLinks.map((link) => {
-          const isActive = pathname === link.href;
+          const isActive = link.shortTag === 'LOG' ? false : pathname === link.href;
           const Icon = link.icon;
           return (
             <Link
               key={link.href}
               href={link.href}
               aria-label={link.label}
-              title={link.label}
-              className={`relative min-h-[34px] flex-1 py-1 px-2 rounded-lg flex items-center justify-center gap-1 text-[11px] font-medium active:scale-[0.96] transition-all cursor-pointer ${
+              onClick={
+                link.shortTag === 'LOG'
+                  ? (e) => {
+                      e.preventDefault();
+                      router.push('/dashboard#ledger');
+                      const el = document.getElementById('ledger');
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth' });
+                      }
+                      window.dispatchEvent(new Event('agentready:open-ledger'));
+                    }
+                  : undefined
+              }
+              className={`relative min-h-[34px] flex-1 py-1 px-2 rounded-lg flex items-center justify-center gap-1 text-[11px] font-medium active:scale-[0.96] transition-all cursor-pointer touch-manipulation select-none ${
                 isActive
                   ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.12)]'
-                  : 'bg-white/[0.02] text-stone-400 border border-white/[0.04] hover:text-white'
+                  : 'bg-white/[0.02] text-stone-400 border border-white/[0.04]'
               }`}
             >
-              <Icon className="w-3.5 h-3.5 shrink-0" />
-              <span className="font-mono font-semibold tracking-wider">
+              <Icon className="w-3.5 h-3.5 shrink-0 pointer-events-none" />
+              <span className="font-mono font-semibold tracking-wider pointer-events-none">
                 {link.shortTag}
               </span>
             </Link>

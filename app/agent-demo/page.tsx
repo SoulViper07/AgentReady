@@ -899,7 +899,7 @@ export default function AgentDemoPage() {
           <button
             type="button"
             onClick={() => handleViewModeChange('user')}
-            className={`relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98] ${
+            className={`relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98] touch-manipulation ${
               activeView === 'user'
                 ? 'text-white'
                 : 'text-stone-400 hover:text-stone-200'
@@ -918,7 +918,7 @@ export default function AgentDemoPage() {
           <button
             type="button"
             onClick={() => handleViewModeChange('inspector')}
-            className={`relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98] ${
+            className={`relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98] touch-manipulation ${
               activeView === 'inspector'
                 ? 'text-amber-200'
                 : 'text-stone-400 hover:text-stone-200'
