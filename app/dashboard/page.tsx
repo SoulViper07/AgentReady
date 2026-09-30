@@ -111,8 +111,8 @@ function AnimatedScoreText({ value }: { value: number }) {
 }
 
 function ReadinessRing({ score }: { score: number }) {
-  const radius = 44;
-  const strokeWidth = 9;
+  const radius = 32;
+  const strokeWidth = 6.5;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset =
     circumference - (circumference * Math.min(100, Math.max(0, score))) / 100;
@@ -123,13 +123,13 @@ function ReadinessRing({ score }: { score: number }) {
   const isPassing = score >= 80;
 
   return (
-    <div className="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 flex items-center justify-center">
+    <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
       {/* Invariant bloom: smooth emerald pulsing ring when score >= 80 */}
       {isPassing && (
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{
-            opacity: [0, 0.55, 0],
+            opacity: [0, 0.45, 0],
             scale: [0.95, 1.15, 1.25],
           }}
           transition={{
@@ -138,23 +138,23 @@ function ReadinessRing({ score }: { score: number }) {
             repeatDelay: 1.5,
             ease: 'easeOut',
           }}
-          className="absolute inset-0 rounded-full bg-emerald-500/25 blur-md pointer-events-none"
+          className="absolute inset-0 rounded-full bg-emerald-500/20 blur-sm pointer-events-none"
         />
       )}
-      <svg className="w-full h-full -rotate-90 relative z-10" viewBox="0 0 110 110">
+      <svg className="w-full h-full -rotate-90 relative z-10" viewBox="0 0 80 80">
         {/* Background track */}
         <circle
-          cx="55"
-          cy="55"
+          cx="40"
+          cy="40"
           r={radius}
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-slate-800/90 fill-transparent"
+          className="text-white/[0.08] fill-transparent"
         />
         {/* Progress bar */}
         <circle
-          cx="55"
-          cy="55"
+          cx="40"
+          cy="40"
           r={radius}
           stroke={strokeColor}
           strokeWidth={strokeWidth}
@@ -166,10 +166,10 @@ function ReadinessRing({ score }: { score: number }) {
       </svg>
       {/* Center text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
-        <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+        <span className="text-lg sm:text-xl font-bold text-white tracking-tight">
           <AnimatedScoreText value={score} />
         </span>
-        <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium">
+        <span className="text-[8px] sm:text-[9px] text-stone-400 font-medium -mt-0.5">
           / 100
         </span>
       </div>
@@ -520,7 +520,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-x-4 gap-y-1.5 text-xs text-stone-400 flex-wrap">
                 <span className="inline-flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-                  <span>{merchant?.location || 'Chandannagar & Chuchura'}</span>
+                  <span>{merchant?.location || 'Chandannagar'}</span>
                 </span>
                 <span className="hidden xs:inline text-stone-700">•</span>
                 <span className="inline-flex items-center gap-1.5">
@@ -544,7 +544,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Readiness Ring & Status Message (Elevated glassmorphic surface) */}
+          {/* Readiness Ring & Status Message (Clean, borderless breathing layout) */}
           {(() => {
             const verifiedProductsCount = products.filter(
               (p) => p.priceVerified && p.inventoryVerified
@@ -554,9 +554,9 @@ export default function DashboardPage() {
               verifiedProductsCount === 0;
 
             return (
-              <div className="relative z-10 flex items-center gap-4 sm:gap-5 bg-gradient-to-b from-white/[0.05] to-transparent border border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-inner">
+              <div className="relative z-10 flex items-center gap-3.5 sm:gap-4.5">
                 <ReadinessRing score={merchant?.readinessScore || 0} />
-                <div className="flex flex-col gap-1 max-w-xs">
+                <div className="flex flex-col gap-0.5 max-w-xs">
                   <span className="text-[11px] uppercase tracking-wider font-semibold text-stone-400">
                     AI Commerce Readiness
                   </span>
@@ -675,7 +675,7 @@ export default function DashboardPage() {
                       type="button"
                       onClick={handleQuickVerifyAll}
                       disabled={quickVerifying}
-                      className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950/40 border border-emerald-500/30 transition-all cursor-pointer"
+                      className="py-2 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm border border-emerald-500/30 transition-all cursor-pointer touch-manipulation active:scale-[0.98]"
                     >
                       {quickVerifying ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -709,7 +709,7 @@ export default function DashboardPage() {
                   </div>
                   <Link
                     href="/agent-demo"
-                    className="mt-2 min-h-[44px] px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-emerald-950/50 transition-all cursor-pointer"
+                    className="mt-2 py-3 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-2 shadow-md shadow-emerald-950/40 transition-all cursor-pointer touch-manipulation active:scale-[0.98]"
                   >
                     <span>Launch AI Buyer Simulator</span>
                     <ArrowRight className="w-4 h-4" />
@@ -733,111 +733,80 @@ export default function DashboardPage() {
             </div>
 
             {/* Right / Secondary Column: Live Catalog Snapshot & Logistics (5 or 4 Cols) */}
-            <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
-              {/* Live Catalog Snapshot Card (Stripe / Shopify Commerce Polish) */}
-              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
-                <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                      <Store className="w-4 h-4 shrink-0" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-[#F8F9FA]">
-                        Live Catalog Snapshot
-                      </h3>
-                      <p className="text-[11px] text-stone-400">
-                        {products.length} cataloged product{products.length === 1 ? '' : 's'}
-                      </p>
-                    </div>
+            <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-8">
+              {/* Live Catalog Snapshot (Borderless Native List View) */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                  <div>
+                    <h3 className="text-sm font-semibold text-[#F8F9FA]">
+                      Live Catalog
+                    </h3>
+                    <p className="text-[11px] text-stone-400 mt-0.5">
+                      {products.length} cataloged product{products.length === 1 ? '' : 's'}
+                    </p>
                   </div>
                   <Link
                     href="/ingest"
-                    className="min-h-[30px] px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                    className="text-amber-400 hover:text-amber-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
                   >
-                    <UploadCloud className="w-3.5 h-3.5 shrink-0" />
+                    <UploadCloud className="w-3.5 h-3.5" />
                     <span>+ Ingest Studio</span>
                   </Link>
                 </div>
 
-                <div className="flex flex-col gap-3">
+                {/* Borderless Product Rows separated only by faint border-b */}
+                <div className="divide-y divide-white/[0.04]">
                   {products.map((p) => {
                     const isVerified = p.priceVerified && p.inventoryVerified;
                     return (
                       <div
                         key={p.id}
-                        className="p-3.5 rounded-xl bg-[#121316] border border-white/[0.06] hover:border-stone-700/80 transition-all flex flex-col gap-2.5"
+                        className="py-3 flex items-center justify-between gap-3 group"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#181A20] to-[#141519] border border-white/[0.08] flex items-center justify-center shrink-0 text-base shadow-inner">
-                              {p.name.toLowerCase().includes('choco') || p.name.toLowerCase().includes('cookie')
-                                ? '🍪'
-                                : p.name.toLowerCase().includes('croissant')
-                                ? '🥐'
-                                : p.name.toLowerCase().includes('sourdough') || p.name.toLowerCase().includes('bread')
-                                ? '🥖'
-                                : p.name.toLowerCase().includes('brew') || p.name.toLowerCase().includes('latte') || p.name.toLowerCase().includes('coffee')
-                                ? '☕'
-                                : '✨'}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h4 className="text-xs font-bold text-[#F8F9FA] tracking-tight">
-                                  {p.name}
-                                </h4>
-                                {p.isEggless && (
-                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-                                    Eggless
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-stone-400 mt-0.5 line-clamp-1">
-                                {p.description || 'Artisan baked specialty'}
-                              </p>
-                            </div>
+                        {/* Left: Subtly rounded square for image/icon + Middle: Title & single muted description */}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-center shrink-0 text-base">
+                            {p.name.toLowerCase().includes('choco') || p.name.toLowerCase().includes('cookie')
+                              ? '🍪'
+                              : p.name.toLowerCase().includes('bomb') || p.name.toLowerCase().includes('truffle')
+                              ? '🍫'
+                              : p.name.toLowerCase().includes('snow') || p.name.toLowerCase().includes('vanilla')
+                              ? '🧁'
+                              : p.name.toLowerCase().includes('oreo')
+                              ? '🍪'
+                              : '✨'}
                           </div>
-
-                          <div className="shrink-0">
-                            {isVerified ? (
-                              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-semibold">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Verified
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[10px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 font-semibold">
-                                <AlertTriangle className="w-3 h-3" />
-                                Pending
-                              </span>
-                            )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="text-xs font-medium text-stone-100 truncate">
+                                {p.name}
+                              </h4>
+                              {p.isEggless && (
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"
+                                  title="100% Eggless"
+                                />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-stone-400 truncate max-w-[210px] sm:max-w-xs mt-0.5">
+                              {p.description || 'Artisan baked specialty'}
+                            </p>
                           </div>
                         </div>
 
-                        {/* Commerce Metrics Strip: Price Badge & Stock Counter */}
-                        <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] text-xs">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-stone-500 text-[11px]">Price:</span>
-                            {p.price !== null ? (
-                              <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                                ₹{p.price}
-                              </span>
-                            ) : (
-                              <span className="text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20 text-[11px] font-semibold">
-                                Unstated (Null)
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-stone-500 text-[11px]">Inventory:</span>
-                            {p.inventory !== null ? (
-                              <span className="font-semibold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-                                {p.inventory} in stock
-                              </span>
-                            ) : (
-                              <span className="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 text-[11px] font-semibold">
-                                Unverified Stock
-                              </span>
-                            )}
+                        {/* Right: Crisp typography, no heavy background pills */}
+                        <div className="text-right shrink-0">
+                          {p.price !== null ? (
+                            <div className="text-xs text-stone-100 font-medium font-mono">
+                              ₹{p.price}
+                            </div>
+                          ) : (
+                            <div className="text-[11px] text-rose-400 font-medium">
+                              Unstated
+                            </div>
+                          )}
+                          <div className="text-[10px] text-stone-500 mt-0.5">
+                            {p.inventory !== null ? `${p.inventory} in stock` : 'Unverified'}
                           </div>
                         </div>
                       </div>
@@ -846,56 +815,56 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Logistics & Operations Card */}
-              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-4">
-                <div className="flex items-center gap-2 pb-3 border-b border-white/[0.08]">
-                  <Truck className="w-4 h-4 text-amber-400 shrink-0" />
-                  <h3 className="text-sm font-semibold text-[#F8F9FA]">
+              {/* Logistics & Fulfillment (Borderless List View) */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 pb-2.5 border-b border-white/[0.06]">
+                  <Truck className="w-4 h-4 text-stone-400 shrink-0" />
+                  <h3 className="text-xs font-semibold text-stone-300 uppercase tracking-wider font-mono">
                     Logistics &amp; Fulfillment
                   </h3>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2.5 text-xs">
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#121316] border border-white/[0.06]">
+                <div className="divide-y divide-white/[0.04] text-xs">
+                  <div className="flex items-center justify-between py-2.5">
                     <span className="text-stone-400">Delivery Territory</span>
-                    <span className="text-[#F8F9FA] font-medium">
-                      Chandannagar &amp; Chuchura
+                    <span className="text-stone-100 font-medium">
+                      Chandannagar
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#121316] border border-white/[0.06]">
+                  <div className="flex items-center justify-between py-2.5">
                     <span className="text-stone-400">Merchant Contact</span>
-                    <span className="text-[#F8F9FA] font-medium">
+                    <span className="text-stone-100 font-medium">
                       +91 8697774043
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#121316] border border-white/[0.06]">
+                  <div className="flex items-center justify-between py-2.5">
                     <span className="text-stone-400">Payment Gateway</span>
                     <span className="text-emerald-400 font-medium">
                       Razorpay UPI &amp; Cards (Active)
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#121316] border border-white/[0.06]">
+                  <div className="flex items-center justify-between py-2.5">
                     <span className="text-stone-400">Cart Reservation</span>
                     <span className="text-amber-300 font-medium">
-                      10-Minute Inventory Hold
+                      10-Minute Hold
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* AI Buyer Simulator CTA */}
-              <div className="rounded-2xl bg-gradient-to-br from-[#181A20] via-[#141519] to-[#0E0F12] border border-amber-500/25 p-4 sm:p-6 shadow-xl shadow-black/20 flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-amber-300 font-semibold text-sm">
+              <div className="rounded-2xl bg-gradient-to-br from-[#181A20] via-[#141519] to-[#0E0F12] border border-white/[0.08] p-4 sm:p-5 flex flex-col gap-2.5 shadow-lg shadow-black/20">
+                <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs">
                   <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>Test Store with AI Buyers</span>
                 </div>
-                <p className="text-xs text-stone-300 leading-relaxed">
+                <p className="text-xs text-stone-400 leading-relaxed">
                   Experience how autonomous LLM agents discover your verified
                   products, parse dietary preferences, and propose orders.
                 </p>
                 <Link
                   href="/agent-demo"
-                  className="w-full mt-1 min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/40 cursor-pointer"
+                  className="w-full mt-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/30 cursor-pointer touch-manipulation active:scale-[0.98]"
                 >
                   <span>Launch AI Buyer Playground</span>
                   <ArrowRight className="w-3.5 h-3.5 shrink-0" />

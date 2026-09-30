@@ -20,7 +20,7 @@ export async function POST() {
       data: {
         name: 'Sweet Crumbs',
         slug: merchantSlug,
-        location: 'Chandannagar & Chuchura',
+        location: 'Chandannagar',
         contactPhone: '+91 8697774043',
         readinessScore: 0,
         transactionStatus: 'NOT_READY',
@@ -30,7 +30,7 @@ export async function POST() {
             details: JSON.stringify({
               action: 'SANDBOX_INITIALIZED',
               merchant: 'Sweet Crumbs',
-              location: 'Chandannagar & Chuchura',
+              location: 'Chandannagar',
               contact: '+91 8697774043',
               timestamp: new Date().toISOString(),
             }),
@@ -43,7 +43,7 @@ export async function POST() {
     const productsToSeed = [
       {
         name: 'Dark Desire',
-        description: 'Decadent dark chocolate molten cookie with 70% single-origin cocoa core.',
+        description: 'Decadent dark chocolate molten cookie with 70% single-origin core. Available as single or 6/8 cookie gift boxes.',
         price: 260,
         currency: 'INR',
         inventory: 25,
@@ -55,7 +55,7 @@ export async function POST() {
       },
       {
         name: 'Hazel Choco Bomb',
-        description: 'Rich roasted hazelnut paste encased in golden toasted cocoa dough.',
+        description: 'Nutella-stuffed golden toasted cocoa dough with crushed hazelnuts. Packaged in custom 6-box bakery sleeves.',
         price: 290,
         currency: 'INR',
         inventory: 20,
@@ -67,7 +67,7 @@ export async function POST() {
       },
       {
         name: 'Velvet Snow',
-        description: 'White chocolate cream cheese cookie dusted with Madagascar vanilla snow.',
+        description: 'White chocolate cream cheese cookie dusted with Madagascar vanilla snow. Premium 6 or 8 cookie box.',
         price: 240,
         currency: 'INR',
         inventory: 15,
@@ -79,7 +79,7 @@ export async function POST() {
       },
       {
         name: 'Yin & Yum',
-        description: 'Balanced half dark cocoa and half sweet vanilla marbled shortbread cookie.',
+        description: 'Balanced dark chocolate & Madagascar vanilla marbled shortbread. Available in 6-piece bakery boxes.',
         price: 250,
         currency: 'INR',
         inventory: 30,
@@ -91,7 +91,7 @@ export async function POST() {
       },
       {
         name: 'Oreo Overload',
-        description: 'Crushed Oreo crumble and vanilla bean cream stuffed inside double chocolate dough.',
+        description: 'Double chocolate dough packed with crushed Oreo crumble & cream. Available in 6 and 8 box bundles.',
         price: 270,
         currency: 'INR',
         inventory: 18,
@@ -103,7 +103,7 @@ export async function POST() {
       },
       {
         name: 'Monster Chaos',
-        description: 'Vibrant blue butter dough packed with mini chocolate chips and pretzel brittle.',
+        description: 'Vibrant blue vanilla butter dough with Belgian chips & pretzel brittle. 6 or 8 cookie party pack.',
         price: 280,
         currency: 'INR',
         inventory: 22,
@@ -115,15 +115,15 @@ export async function POST() {
       },
       {
         name: 'Velvet Truffle Mix',
-        description: 'Assorted gourmet box with 2 Dark Desire, 2 Hazel Choco, and 2 Velvet Snow truffles.',
-        price: 550,
+        description: 'Luxury 8-cookie sampler box: 2 Dark Desire, 2 Hazel Choco Bomb, 2 Velvet Snow, and 2 Yin & Yum.',
+        price: 580,
         currency: 'INR',
         inventory: 12,
         isEggless: true,
         priceVerified: true,
         inventoryVerified: true,
         status: 'VERIFIED',
-        sourceEvidence: 'Official Bakery Spec Sheet: ₹550 | Stock: 12 | Eggless verified',
+        sourceEvidence: 'Official Bakery Spec Sheet: ₹580 | Stock: 12 | Eggless verified',
       },
     ];
 

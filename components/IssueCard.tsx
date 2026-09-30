@@ -364,7 +364,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   })
                 }
                 disabled={loadingThis || isResolving}
-                className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/40 cursor-pointer shrink-0"
+                className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/30 cursor-pointer shrink-0 touch-manipulation active:scale-[0.98]"
               >
                 {loadingThis ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -402,7 +402,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   })
                 }
                 disabled={loadingThis || isResolving || !matchedProduct}
-                className="min-h-[44px] px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/40 cursor-pointer shrink-0"
+                className="py-3 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/30 cursor-pointer shrink-0 touch-manipulation active:scale-[0.98]"
               >
                 {loadingThis ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -440,7 +440,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   })
                 }
                 disabled={loadingThis || isResolving || !matchedProduct}
-                className="min-h-[44px] px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/40 cursor-pointer shrink-0"
+                className="py-3 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/30 cursor-pointer shrink-0 touch-manipulation active:scale-[0.98]"
               >
                 {loadingThis ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -484,7 +484,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                     })
                   }
                   disabled={loadingThis || isResolving}
-                  className="min-h-[44px] px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/40 cursor-pointer ml-auto"
+                  className="py-3 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/30 cursor-pointer ml-auto touch-manipulation active:scale-[0.98]"
                 >
                   {loadingThis ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

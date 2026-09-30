@@ -21,11 +21,12 @@ function Github({ className = "w-3.5 h-3.5" }: { className?: string }) {
 export default function Footer() {
   return (
     <footer className="w-full mt-auto border-t border-white/[0.06] bg-[#0E0F12]/95 backdrop-blur-md text-stone-400 text-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        {/* Desktop Grid: Platform Rails & Protocols (Hidden on mobile) */}
+        <div className="hidden md:grid md:grid-cols-4 gap-8 mb-8">
           
           {/* Column 1: Platform Scope */}
-          <div className="sm:col-span-2 space-y-3">
+          <div className="md:col-span-2 space-y-3">
             <div className="flex items-center gap-2 text-stone-100 font-semibold text-sm tracking-tight">
               <span className="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
                 <ShieldCheck className="w-3.5 h-3.5"/>
@@ -98,11 +99,11 @@ export default function Footer() {
 
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-2 gap-y-1">
+        {/* Desktop Bottom Bar (Hidden on mobile) */}
+        <div className="hidden md:flex pt-6 border-t border-white/[0.06] items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
             <span>© 2026 AgentReady.</span>
-            <span className="hidden sm:inline text-stone-600">•</span>
+            <span className="text-stone-600">•</span>
             <span>
               Engineered by{" "}
               <a 
@@ -127,6 +128,32 @@ export default function Footer() {
             <ExternalLink className="w-3 h-3 text-stone-500"/>
           </a>
         </div>
+
+        {/* Mobile-Only Minimalist Footer (Clean & generous bottom padding) */}
+        <div className="md:hidden flex flex-col items-center justify-center text-center gap-3 py-2 pb-24">
+          <p className="text-[11px] text-stone-400 leading-normal">
+            © 2026 AgentReady • Engineered by{" "}
+            <a 
+              href="https://github.com/SoulViper07" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="text-stone-200 font-medium hover:text-emerald-400 transition-colors underline decoration-stone-600 underline-offset-2"
+            >
+              Areet Das (SoulViper07)
+            </a>
+          </p>
+          <a
+            href="https://github.com/SoulViper07/AgentReady"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-stone-400 hover:text-stone-200 text-xs transition-colors py-1"
+            aria-label="GitHub Repository"
+          >
+            <Github className="w-3.5 h-3.5"/>
+            <span className="font-mono text-[11px]">GitHub</span>
+          </a>
+        </div>
+
       </div>
     </footer>
   );

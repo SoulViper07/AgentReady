@@ -20,7 +20,7 @@ export async function POST() {
       data: {
         name: 'Sweet Crumbs',
         slug: merchantSlug,
-        location: 'Chandannagar & Chuchura',
+        location: 'Chandannagar',
         contactPhone: '+91 8697774043',
         readinessScore: 0,
         transactionStatus: 'NOT_READY',
@@ -30,7 +30,7 @@ export async function POST() {
             details: JSON.stringify({
               action: 'MERCHANT_ONBOARDED',
               merchant: 'Sweet Crumbs',
-              location: 'Chandannagar & Chuchura',
+              location: 'Chandannagar',
               contact: '+91 8697774043',
             }),
           },
