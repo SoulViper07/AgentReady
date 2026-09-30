@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
 import {
@@ -158,6 +158,15 @@ interface BuyerApiResponse {
   explanation: string;
 }
 
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'assistant';
+  text: string;
+  timestamp: string;
+  response?: BuyerApiResponse;
+  proposal?: ProposalRecord;
+}
+
 interface RazorpayPaymentResponse {
   razorpay_order_id: string;
   razorpay_payment_id: string;
@@ -193,6 +202,20 @@ function ensureRazorpayReady(maxWaitMs = 3000): Promise<boolean> {
 export default function AgentDemoPage() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 'welcome',
+      sender: 'assistant',
+      text: "Welcome to Sweet Crumbs! I am your autonomous AI Buyer agent. What would you like to order today? You can say '1 box of Dark Desire cookies', 'Any eggless dessert under ₹250', or tap any suggestion below.",
+      timestamp: 'Ready',
+    },
+  ]);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
   const [merchantStatus, setMerchantStatus] = useState<string>('LOADING');
   const [merchantScore, setMerchantScore] = useState<number>(0);
   const [activeResponse, setActiveResponse] = useState<BuyerApiResponse | null>(
@@ -389,6 +412,14 @@ export default function AgentDemoPage() {
       setCheckoutOrderData(null);
       setGateBlockedReason(null);
       setGateBlockedInfo(null);
+      setMessages([
+        {
+          id: 'welcome',
+          sender: 'assistant',
+          text: "Welcome to Sweet Crumbs! I am your autonomous AI Buyer agent. What would you like to order today? You can say '1 box of Dark Desire cookies', 'Any eggless dessert under ₹250', or tap any suggestion below.",
+          timestamp: 'Ready',
+        },
+      ]);
     };
     window.addEventListener('agentready:reset', handleReset);
     return () => window.removeEventListener('agentready:reset', handleReset);
@@ -427,7 +458,22 @@ export default function AgentDemoPage() {
     const textToRun = promptQuery.trim();
     if (!textToRun || loading) return;
 
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const userMsgId = `user_${Date.now()}`;
+
+    // Add user message to conversation immediately
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: userMsgId,
+        sender: 'user',
+        text: textToRun,
+        timestamp: now,
+      },
+    ]);
+    setQuery('');
     setLoading(true);
+
     // Clear old proposal states and reset Transaction Gate card
     setProposal(null);
     setGateBlockedReason(null);
@@ -454,8 +500,37 @@ export default function AgentDemoPage() {
           ...prev.filter((p) => p.id !== data.proposal!.id).slice(0, 4),
         ]);
       }
+
+      const aiMsgId = `assistant_${Date.now()}`;
+      const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const aiText =
+        data.explanation ||
+        (data.status === 'PROPOSAL_GENERATED'
+          ? 'I found the best matching item in the verified catalog and prepared your order proposal!'
+          : `Catalog query processed with status: ${data.status}`);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: aiMsgId,
+          sender: 'assistant',
+          text: aiText,
+          timestamp: aiTime,
+          response: data,
+          proposal: data.proposal,
+        },
+      ]);
     } catch (err) {
       console.error(err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant_err_${Date.now()}`,
+          sender: 'assistant',
+          text: 'Encountered a network error reaching the autonomous catalog engine.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -820,7 +895,7 @@ export default function AgentDemoPage() {
           <button
             type="button"
             onClick={() => handleViewModeChange('merchant')}
-            className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.97] ${
               viewMode === 'merchant'
                 ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/30'
                 : 'text-stone-400 hover:text-stone-200'
@@ -832,7 +907,7 @@ export default function AgentDemoPage() {
           <button
             type="button"
             onClick={() => handleViewModeChange('inspector')}
-            className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.97] ${
               viewMode === 'inspector'
                 ? 'bg-amber-500/20 text-amber-300 shadow-sm border border-amber-500/30'
                 : 'text-stone-400 hover:text-stone-200'
@@ -845,249 +920,239 @@ export default function AgentDemoPage() {
       </div>
 
       {/* Main Two-Column Playground */}
-      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-36 md:pb-12 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Autonomous Buyer Terminal (6 Cols) */}
-        <section className="lg:col-span-6 flex flex-col gap-5">
-          <div>
-            <div className="flex items-center justify-between">
+        <section className="lg:col-span-6 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
               <h2 className="text-lg sm:text-xl font-bold text-[#F8F9FA] flex items-center gap-2">
                 <Bot className="w-5 h-5 text-amber-400 shrink-0" />
                 Autonomous Buyer Client
               </h2>
-              <AuthorityTag
-                type="AI_INFERRED"
-                compact
-                customLabel="Autonomous LLM Agent"
-                pulse
-              />
+              <p className="text-xs text-stone-400 mt-0.5">
+                Natural language commerce agent with verified catalog &amp; deterministic gates.
+              </p>
             </div>
-            <p className="text-xs text-stone-400 mt-1">
-              Natural language shopping agent equipped with structured catalog discovery and order proposal tools.
-            </p>
+            <AuthorityTag
+              type="AI_INFERRED"
+              compact
+              customLabel="Autonomous LLM Agent"
+              pulse
+            />
           </div>
 
-          {/* Interactive Natural Language Prompt Box (Ambient Search Console) */}
-          <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] focus-within:border-amber-500/40 focus-within:ring-2 focus-within:ring-amber-500/20 p-4 shadow-xl shadow-black/20 transition-all flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+          {/* Clean Native Chat-Bubble Feed */}
+          <div className="rounded-2xl bg-[#141519]/90 border border-white/[0.08] shadow-xl shadow-black/20 flex flex-col overflow-hidden">
+            {/* Chat Stream Header */}
+            <div className="px-4 py-3 bg-[#181A20] border-b border-white/[0.06] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-mono font-bold text-stone-200">
+                  AI Buyer Chat Stream
+                </span>
+              </div>
+              <span className="text-[10px] font-mono text-stone-400">
+                Ground Truth Verified
+              </span>
+            </div>
+
+            {/* Chat Messages Container */}
+            <div className="p-4 sm:p-5 flex flex-col gap-3.5 min-h-[380px] max-h-[580px] overflow-y-auto no-scrollbar scroll-smooth">
+              {messages.map((msg) => (
+                <React.Fragment key={msg.id}>
+                  {msg.sender === 'user' ? (
+                    <div className="flex justify-end animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="max-w-[85%] sm:max-w-[75%] bg-emerald-500/20 border border-emerald-500/30 text-emerald-100 rounded-2xl rounded-tr-sm px-4 py-2.5 shadow-sm text-xs sm:text-sm leading-relaxed">
+                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                        <div className="text-[10px] text-emerald-400/70 font-mono mt-1 text-right">
+                          {msg.timestamp}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-2.5 justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="w-7 h-7 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+                        <Bot className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="max-w-[88%] sm:max-w-[80%] bg-white/[0.05] border border-white/[0.08] text-stone-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-md text-xs sm:text-sm leading-relaxed">
+                        <p className="whitespace-pre-wrap">{msg.text}</p>
+
+                        {/* Proposal Card Highlight inside Chat */}
+                        {msg.proposal && (
+                          <div className="mt-2.5 p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between text-xs font-mono text-emerald-300">
+                            <span className="flex items-center gap-1.5 font-semibold text-white">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                              {msg.proposal.requestedQuantity}x{' '}
+                              {msg.proposal.product?.name ||
+                                msg.response?.proposalData?.productName ||
+                                'Verified Item'}
+                            </span>
+                            <span className="font-bold text-emerald-400">
+                              ₹{msg.proposal.calculatedTotal}.00
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Discreet Collapsible Runtime Trace - HIDE THE CODE */}
+                        {msg.response &&
+                          (msg.response.thoughtProcess?.length > 0 ||
+                            msg.response.toolCalls?.length > 0) && (
+                            <details className="mt-2.5 group rounded-xl bg-[#101114] border border-white/[0.06] overflow-hidden text-xs">
+                              <summary className="p-2 px-2.5 cursor-pointer select-none flex items-center justify-between text-stone-400 hover:text-stone-200 text-[11px] font-mono transition-colors active:scale-[0.97]">
+                                <span className="flex items-center gap-1.5 text-amber-300 font-semibold">
+                                  <Sparkles className="w-3 h-3 text-amber-400" />
+                                  <span>⚡ View Runtime Trace</span>
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] text-stone-500">
+                                    {msg.response.thoughtProcess?.length || 0} steps
+                                  </span>
+                                  <span className="text-[10px] text-stone-400 group-open:rotate-180 transition-transform">
+                                    ▾
+                                  </span>
+                                </div>
+                              </summary>
+                              <div className="p-3 border-t border-white/[0.04] space-y-2 bg-[#0C0D0F]">
+                                {msg.response.thoughtProcess?.map((step, sIdx) => {
+                                  const style = getThoughtStyle(step);
+                                  return (
+                                    <div
+                                      key={sIdx}
+                                      className="flex items-start gap-2 p-1.5 rounded bg-[#141519] border border-white/[0.04] text-[11px] font-mono"
+                                    >
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 border ${style.badgeBg}`}
+                                      >
+                                        [{sIdx + 1}] {style.typeLabel}
+                                      </span>
+                                      <span className={`${style.textColor} leading-snug flex-1`}>
+                                        {step}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+
+                                {msg.response.toolCalls?.map((tc, tcIdx) => (
+                                  <div
+                                    key={tcIdx}
+                                    className="rounded-lg bg-[#141519] border border-white/[0.04] p-2 text-[10px] font-mono"
+                                  >
+                                    <span className="text-amber-300 font-semibold block mb-1">
+                                      tool: {tc.toolName}()
+                                    </span>
+                                    <pre className="text-emerald-400 overflow-x-auto no-scrollbar max-h-32">
+                                      {JSON.stringify(tc.result, null, 2)}
+                                    </pre>
+                                  </div>
+                                ))}
+                              </div>
+                            </details>
+                          )}
+
+                        <div className="text-[10px] text-stone-500 font-mono mt-1.5">
+                          {msg.timestamp}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+
+              {/* Typing State with 3 Bouncing Dots */}
+              {loading && (
+                <div className="flex items-start gap-2.5 justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="w-7 h-7 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+                    <Bot className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="bg-white/[0.05] border border-white/[0.08] text-stone-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-md flex items-center gap-2.5">
+                    <span className="text-xs text-stone-400 font-mono">Evaluating order</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.3s]" />
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.15s]" />
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" />
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* Native Mobile Sticky Dock / Desktop Relative Input Bar */}
+          <div className="fixed md:relative bottom-0 left-0 w-full p-3 sm:p-4 md:p-0 bg-[#0E0F12]/85 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-t md:border-t-0 border-white/[0.08] z-50 md:z-auto transition-all">
+            <div className="max-w-7xl mx-auto w-full md:max-w-none flex flex-col gap-2">
+              {/* Horizontally scrollable suggestion chips */}
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                {suggestionChips.map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setQuery(chip.query);
+                      handleRunBuyer(chip.query);
+                    }}
+                    disabled={loading}
+                    className="shrink-0 px-3 py-1.5 rounded-xl bg-[#181A20] hover:bg-[#20232B] border border-white/[0.08] hover:border-amber-500/30 text-xs text-stone-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer active:scale-[0.97] shadow-sm disabled:opacity-50"
+                  >
+                    <span className="text-amber-300 font-medium">&ldquo;{chip.query}&rdquo;</span>
+                    <span
+                      className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold border ${chip.badgeStyle}`}
+                    >
+                      {chip.badgeText}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Prompt Input Box */}
+              <div className="rounded-2xl bg-[#181A20] border border-white/[0.1] focus-within:border-amber-500/50 focus-within:ring-2 focus-within:ring-amber-500/20 p-2 sm:p-2.5 shadow-2xl flex items-center gap-2 transition-all">
+                <div className="pl-2 hidden xs:flex items-center text-amber-400">
                   <Sparkles className="w-4 h-4" />
                 </div>
-                <div>
-                  <span className="text-xs font-mono font-bold text-stone-200 tracking-wide uppercase">
-                    Natural Language Buyer Prompt
-                  </span>
-                  <p className="text-[10px] text-stone-400 font-mono">
-                    Autonomous Intent Parsing → Structured DB Invariants
-                  </p>
-                </div>
-              </div>
-              <AuthorityTag
-                type="AI_INFERRED"
-                compact
-                customLabel="LLM Intent Parser"
-              />
-            </div>
-
-            {/* Expandable Textarea with Warm Focus Rings */}
-            <div className="relative">
-              <textarea
-                rows={2}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (
-                    (e.key === 'Enter' && !e.shiftKey) ||
-                    (e.key === 'Enter' && (e.metaKey || e.ctrlKey))
-                  ) {
-                    e.preventDefault();
-                    if (query.trim() && !loading) {
-                      handleRunBuyer(query);
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (query.trim() && !loading) {
+                        handleRunBuyer(query);
+                      }
                     }
-                  }
-                }}
-                placeholder="Type what you need (e.g. '2 boxes of Double Dark Sea Salt Cookies', 'Any eggless dessert under ₹250')..."
-                className="w-full bg-[#121316] border border-white/[0.08] focus:border-amber-500/40 rounded-xl p-3 text-xs sm:text-sm text-stone-100 placeholder-stone-500 focus:outline-none resize-none font-sans leading-relaxed pr-10 shadow-inner"
-              />
-              {query.trim().length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setQuery('')}
-                  className="absolute top-2.5 right-2.5 p-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white transition-colors cursor-pointer border border-white/[0.06]"
-                  title="Clear input"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            <p className="text-xs text-stone-500 mt-2">
-              Try ordering from the sandbox: <span className="text-stone-400 italic">&ldquo;I want 2 Dark Desire cookies and 1 Hazel Choco Bomb&rdquo;</span>
-            </p>
-
-            {/* Action Bar: Keyboard Shortcut + Run Button */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-0.5">
-              <div className="text-[11px] text-stone-400 font-mono flex items-center gap-1.5">
-                <span>Press</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-stone-800 border border-stone-700 text-stone-300 font-mono text-[10px]">
-                  Enter ↵
-                </kbd>
-                <span>or</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-stone-800 border border-stone-700 text-stone-300 font-mono text-[10px]">
-                  ⌘+Enter
-                </kbd>
-                <span>to run</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleRunBuyer(query)}
-                disabled={loading || !query.trim()}
-                className="min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600 hover:from-amber-500 hover:to-emerald-500 disabled:from-stone-800 disabled:to-stone-800 disabled:text-stone-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-black/30 disabled:shadow-none transition-all cursor-pointer disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-amber-200" />
-                    <span>Evaluating catalog...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5 text-amber-200" />
-                    <span>Run AI Buyer</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Dynamic Suggestion Pills Below the Box */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono text-stone-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Bot className="w-3.5 h-3.5 text-amber-400" />
-                Live Catalog Query Suggestions:
-              </span>
-              <span className="text-[10px] font-mono text-stone-400">
-                {catalogProducts.length > 0
-                  ? `${catalogProducts.length} verified item(s) in SQLite`
-                  : 'Preset Invariant Tests'}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {suggestionChips.map((chip, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    setQuery(chip.query);
-                    handleRunBuyer(chip.query);
                   }}
-                  disabled={loading}
-                  className="px-3 py-2 rounded-xl bg-[#181A20] hover:bg-[#20232B] border border-white/[0.08] hover:border-amber-500/30 text-left text-xs transition-all group disabled:opacity-50 flex items-center justify-between gap-3 cursor-pointer shadow-sm"
-                >
-                  <div className="flex flex-col">
-                    <span className="font-medium text-amber-300 group-hover:text-amber-200">
-                      &ldquo;{chip.query}&rdquo;
-                    </span>
-                    <span className="text-[10px] text-stone-400 group-hover:text-stone-300 font-mono mt-0.5">
-                      {chip.desc}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold shrink-0 border ${chip.badgeStyle}`}
+                  placeholder="Type order (e.g. '2 boxes of Dark Desire cookies', 'Any eggless dessert under ₹250')..."
+                  className="flex-1 bg-transparent px-2 py-2 text-xs sm:text-sm text-stone-100 placeholder-stone-500 focus:outline-none font-sans"
+                />
+                {query.trim().length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white transition-colors cursor-pointer border border-white/[0.06] active:scale-[0.97]"
+                    title="Clear input"
                   >
-                    {chip.badgeText}
-                  </span>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleRunBuyer(query)}
+                  disabled={loading || !query.trim()}
+                  className="min-h-[42px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600 hover:from-amber-500 hover:to-emerald-500 disabled:from-stone-800 disabled:to-stone-800 disabled:text-stone-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-black/30 disabled:shadow-none transition-all cursor-pointer disabled:cursor-not-allowed active:scale-[0.97] shrink-0"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-200" />
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5 text-amber-200" />
+                      <span className="hidden sm:inline">Run AI Buyer</span>
+                    </>
+                  )}
                 </button>
-              ))}
+              </div>
             </div>
           </div>
-
-          {/* Clean Conversational Outcome Card (Zero raw terminal clutter) */}
-          {activeResponse ? (
-            <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-5 shadow-xl shadow-black/20 flex flex-col gap-3.5 animate-in fade-in">
-              <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-[#F8F9FA] font-mono uppercase tracking-wider">
-                      Buyer Agent Outcome
-                    </h3>
-                    <span className="text-[10px] text-stone-400 font-mono">
-                      Autonomous Catalog &amp; Intent Match
-                    </span>
-                  </div>
-                </div>
-                <span
-                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
-                    activeResponse.status === 'PROPOSAL_GENERATED'
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                      : activeResponse.status === 'OUT_OF_STOCK'
-                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                      : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                  }`}
-                >
-                  {activeResponse.status === 'PROPOSAL_GENERATED'
-                    ? 'PROPOSAL GENERATED'
-                    : activeResponse.status}
-                </span>
-              </div>
-
-              {/* Prompt Evaluated */}
-              <div className="text-xs text-stone-400 font-mono flex items-center gap-1.5">
-                <span className="text-amber-400 font-bold">&gt;</span>
-                <span className="truncate">Prompt: &ldquo;{activeResponse.query}&rdquo;</span>
-              </div>
-
-              {/* Clean Conversational Explanation */}
-              <div className="p-4 rounded-xl bg-[#121316] border border-white/[0.06] text-xs text-stone-200 leading-relaxed font-sans shadow-inner">
-                <span className="text-amber-300 font-semibold block mb-1 text-[11px] font-mono">
-                  Agent Resolution:
-                </span>
-                {activeResponse.explanation}
-              </div>
-
-              {/* Proposal Highlight Pill if generated */}
-              {activeResponse.proposalData && (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/20 text-xs font-mono text-emerald-300">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span className="font-semibold text-white">
-                      {activeResponse.proposalData.requestedQuantity}x{' '}
-                      {activeResponse.proposalData.productName}
-                    </span>
-                  </div>
-                  <span className="font-bold text-emerald-400">
-                    ₹{activeResponse.proposalData.calculatedTotal} INR
-                  </span>
-                </div>
-              )}
-            </div>
-          ) : loading ? (
-            <div className="rounded-2xl bg-[#181A20]/90 border border-amber-500/30 p-8 shadow-xl flex flex-col items-center justify-center text-center gap-3 animate-pulse">
-              <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
-              <span className="text-xs font-mono text-amber-300">
-                Evaluating verified catalog &amp; checking deterministic invariants...
-              </span>
-            </div>
-          ) : (
-            <div className="rounded-2xl bg-[#181A20]/50 border border-white/[0.06] p-8 flex flex-col items-center justify-center text-center gap-3 min-h-[220px]">
-              <div className="w-10 h-10 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-stone-400">
-                <Bot className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-xs font-semibold text-stone-200">
-                  Autonomous Buyer Assistant Ready
-                </h3>
-                <p className="text-[11px] text-stone-400 mt-1 max-w-xs leading-relaxed">
-                  Type a natural language request above or select a suggestion chip to formulate an order proposal.
-                </p>
-              </div>
-            </div>
-          )}
         </section>
         {/* Right Column: Transaction Proposal Inspector (6 Cols) */}
         <section className="lg:col-span-6 flex flex-col gap-5">
@@ -1127,10 +1192,10 @@ export default function AgentDemoPage() {
             </div>
           </div>
 
-          {/* Active Proposal Card (Stripe/Apple-Grade Modern Digital Checkout) */}
+          {/* Active Proposal Card (Apple Pay-Style Checkout Card) */}
           {proposal ? (
             <TiltCard className="rounded-2xl">
-              <div className="rounded-2xl bg-[#181A20]/90 border border-white/[0.08] p-4 sm:p-6 flex flex-col gap-5 shadow-xl shadow-black/20">
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-stone-900 to-[#0E0F12] border border-white/10 shadow-2xl p-4 sm:p-6 flex flex-col gap-5 backdrop-blur-md">
                 {/* 1. Merchant Badge & Security Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
                   <div className="flex items-center gap-3">
@@ -1155,7 +1220,7 @@ export default function AgentDemoPage() {
                         <button
                           type="button"
                           onClick={() => copyProposalId(proposal.id)}
-                          className="flex items-center gap-1 text-stone-400 hover:text-white transition-colors cursor-pointer"
+                          className="flex items-center gap-1 text-stone-400 hover:text-white transition-colors cursor-pointer active:scale-[0.97]"
                         >
                           <span className="truncate max-w-[110px] sm:max-w-[180px] break-all">{proposal.id}</span>
                           {copiedId ? (
@@ -1216,7 +1281,7 @@ export default function AgentDemoPage() {
                       <span>Zero LLM authority in transaction gate rejection</span>
                       <Link
                         href="/dashboard#audit-ledger"
-                        className="text-rose-400 hover:text-rose-300 underline underline-offset-2 flex items-center gap-1"
+                        className="text-rose-400 hover:text-rose-300 underline underline-offset-2 flex items-center gap-1 active:scale-[0.97]"
                       >
                         <span>View in Audit Ledger</span>
                         <ExternalLink className="w-3 h-3" />
@@ -1289,7 +1354,7 @@ export default function AgentDemoPage() {
 
                     {/* Cryptographic Proof Box (Progressive Disclosure - Collapsed by Default) */}
                     <details className="group rounded-xl bg-[#121316] border border-emerald-500/30 overflow-hidden font-mono text-[11px]">
-                      <summary className="p-3 cursor-pointer select-none flex items-center justify-between text-emerald-400 font-semibold text-[10px] hover:bg-emerald-500/5 transition-colors">
+                      <summary className="p-3 cursor-pointer select-none flex items-center justify-between text-emerald-400 font-semibold text-[10px] hover:bg-emerald-500/5 transition-colors active:scale-[0.97]">
                         <span className="flex items-center gap-1.5">
                           <Hash className="w-3 h-3 shrink-0" />
                           <span>⚙️ View Cryptographic Proof (HMAC SHA-256)</span>
@@ -1323,7 +1388,7 @@ export default function AgentDemoPage() {
                     <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-1">
                       <Link
                         href="/dashboard#audit-ledger"
-                        className="w-full sm:flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs text-center flex items-center justify-center gap-1.5 transition-colors"
+                        className="w-full sm:flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs text-center flex items-center justify-center gap-1.5 transition-colors active:scale-[0.97]"
                       >
                         <Store className="w-3.5 h-3.5" />
                         View Immutable Audit Logs in Dashboard
@@ -1335,7 +1400,7 @@ export default function AgentDemoPage() {
                           setVerifiedReceipt(null);
                           setCheckoutOrderData(null);
                         }}
-                        className="py-2.5 px-4 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-medium transition-colors cursor-pointer"
+                        className="py-2.5 px-4 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-medium transition-colors cursor-pointer active:scale-[0.97]"
                       >
                         Dismiss Receipt
                       </button>
@@ -1604,7 +1669,7 @@ export default function AgentDemoPage() {
                   );
                 })()}
 
-                {/* 7. Stripe/Apple-Grade Primary Payment Action Button (min-height 48px) */}
+                {/* 7. Apple Pay-Grade Massive Primary Payment Action Button (min-height 52px) */}
                 <button
                   onClick={
                     proposal.status === 'RESERVED' && checkoutOrderData
@@ -1616,11 +1681,11 @@ export default function AgentDemoPage() {
                     proposal.status === 'BLOCKED' ||
                     proposal.status === 'COMPLETED'
                   }
-                  className="w-full min-h-[48px] rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-stone-800 disabled:text-stone-500 text-white font-semibold py-3 px-5 text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 cursor-pointer disabled:cursor-not-allowed transition-all"
+                  className="w-full min-h-[52px] py-4 rounded-xl text-base font-semibold shadow-2xl shadow-emerald-950/60 active:scale-[0.97] transition-all bg-emerald-600 hover:bg-emerald-500 disabled:bg-stone-800 disabled:text-stone-500 text-white flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
                 >
                   {gateLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
                       <span>Verifying Deterministic Invariants...</span>
                     </>
                   ) : proposal.status === 'BLOCKED' ? (
@@ -1660,9 +1725,9 @@ export default function AgentDemoPage() {
                             type="button"
                             disabled={gateLoading}
                             onClick={() => openRazorpayCheckout(checkoutOrderData)}
-                            className="w-full min-h-[44px] py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
+                            className="w-full min-h-[52px] py-4 rounded-xl text-base font-semibold shadow-2xl shadow-emerald-950/60 active:scale-[0.97] transition-all bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
                           >
-                            <CreditCard className="w-4 h-4" />
+                            <CreditCard className="w-5 h-5" />
                             <span>Pay ₹{(checkoutOrderData.amount / 100).toFixed(2)} via Razorpay Test Rails →</span>
                           </button>
 
@@ -1683,7 +1748,7 @@ export default function AgentDemoPage() {
                                       checkoutOrderData.testSignature || '',
                                   })
                                 }
-                                className="py-2.5 px-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-emerald-400 border border-emerald-500/30 font-mono text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                                className="py-2.5 px-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-emerald-400 border border-emerald-500/30 font-mono text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-[0.97]"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>Verify (Valid HMAC)</span>
@@ -1703,7 +1768,7 @@ export default function AgentDemoPage() {
                                       'invalid_tampered_signature_hex_000',
                                   })
                                 }
-                                className="py-2.5 px-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-rose-400 border border-rose-500/30 font-mono text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                                className="py-2.5 px-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-rose-400 border border-rose-500/30 font-mono text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-[0.97]"
                               >
                                 <AlertOctagon className="w-3.5 h-3.5" />
                                 <span>Test Invalid HMAC</span>
@@ -1718,7 +1783,7 @@ export default function AgentDemoPage() {
                   <button
                     type="button"
                     onClick={() => setShowJson(!showJson)}
-                    className="text-xs text-stone-400 hover:text-stone-200 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg border border-white/[0.06] hover:border-white/20 bg-[#121316] transition-colors cursor-pointer self-center"
+                    className="text-xs text-stone-400 hover:text-stone-200 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg border border-white/[0.06] hover:border-white/20 bg-[#121316] transition-colors cursor-pointer self-center active:scale-[0.97]"
                   >
                     <Code className="w-3.5 h-3.5 shrink-0" />
                     <span>{showJson ? '🔍 Hide Raw Proposal JSON' : '🔍 Inspect Raw Data & Proposal JSON'}</span>
@@ -1735,7 +1800,7 @@ export default function AgentDemoPage() {
               </div>
             </TiltCard>
           ) : activeResponse ? (
-            <div className="rounded-2xl bg-[#181A20]/90 border border-amber-500/30 p-6 flex flex-col gap-4 shadow-xl shadow-black/20 animate-in fade-in zoom-in-95">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-stone-900 to-[#0E0F12] border border-amber-500/30 p-4 sm:p-6 flex flex-col gap-4 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95">
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -1792,7 +1857,7 @@ export default function AgentDemoPage() {
               <div className="flex flex-col sm:flex-row items-center gap-2 pt-2 border-t border-white/[0.06]">
                 <Link
                   href="/dashboard"
-                  className="w-full sm:flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs text-center flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                  className="w-full sm:flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs text-center flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.97]"
                 >
                   <Store className="w-3.5 h-3.5" />
                   Verify Catalog in Merchant Dashboard
@@ -1803,7 +1868,7 @@ export default function AgentDemoPage() {
                     type="button"
                     onClick={handleQuickVerify}
                     disabled={quickVerifying}
-                    className="w-full sm:w-auto py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    className="w-full sm:w-auto py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.97]"
                   >
                     {quickVerifying && (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -1814,7 +1879,7 @@ export default function AgentDemoPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl bg-[#181A20]/50 border border-white/[0.06] p-8 flex flex-col items-center justify-center text-center gap-3 min-h-[320px]">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-stone-900/60 to-[#0E0F12]/80 border border-white/10 shadow-2xl p-8 flex flex-col items-center justify-center text-center gap-3 min-h-[320px] backdrop-blur-sm">
               <ShoppingCart className="w-12 h-12 text-stone-500" />
               <h3 className="text-sm font-semibold text-stone-300">
                 No Active Transaction Proposal
@@ -1832,7 +1897,7 @@ export default function AgentDemoPage() {
                 <button
                   type="button"
                   onClick={() => setIsTraceExpanded(!isTraceExpanded)}
-                  className="text-xs text-stone-300 hover:text-white flex items-center gap-1.5 py-2 px-3.5 rounded-xl border border-white/[0.1] bg-[#181A20] hover:bg-[#20232B] transition-colors cursor-pointer shadow-sm"
+                  className="text-xs text-stone-300 hover:text-white flex items-center gap-1.5 py-2 px-3.5 rounded-xl border border-white/[0.1] bg-[#181A20] hover:bg-[#20232B] transition-all cursor-pointer shadow-sm active:scale-[0.97]"
                 >
                   <span className="text-amber-400 shrink-0">⚙️</span>
                   <span className="font-semibold">
@@ -2030,7 +2095,7 @@ export default function AgentDemoPage() {
                       setVerifiedReceipt(null);
                       setCheckoutOrderData(null);
                     }}
-                    className="py-2.5 flex items-center justify-between text-xs font-mono cursor-pointer hover:bg-white/[0.04] px-2 rounded-lg transition-colors"
+                    className="py-2.5 flex items-center justify-between text-xs font-mono cursor-pointer hover:bg-white/[0.04] px-2 rounded-lg transition-all active:scale-[0.97]"
                   >
                     <div>
                       <span className="text-[#F8F9FA] font-semibold">
