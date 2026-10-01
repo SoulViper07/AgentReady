@@ -38,12 +38,17 @@ body {
   .tactile-btn {
     transition: all 100ms ease-out;
   }
-  .tactile-btn:active {
-    transform: scale(0.97);
-  }
   @media (hover: hover) {
+    .tactile-btn:active {
+      transform: scale(0.97);
+    }
     .tactile-btn:hover {
       filter: brightness(1.05);
+    }
+  }
+  @media (hover: none) {
+    .tactile-btn:active {
+      opacity: 0.9;
     }
   }
 }
