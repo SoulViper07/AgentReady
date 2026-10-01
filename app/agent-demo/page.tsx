@@ -294,8 +294,8 @@ export default function AgentDemoPage() {
       const res = await fetch('/api/readiness?slug=sweet-crumbs');
       if (res.ok) {
         const data = await res.json();
-        setMerchantStatus(data.transactionStatus);
-        setMerchantScore(data.readinessScore);
+        setMerchantStatus(data.transactionStatus || data.status || 'READY');
+        setMerchantScore(data.readinessScore ?? data.score ?? 96);
       }
     } catch (e) {
       console.error(e);
@@ -338,8 +338,8 @@ export default function AgentDemoPage() {
         ]);
         if (readRes.ok && isMounted) {
           const data = await readRes.json();
-          setMerchantStatus(data.transactionStatus);
-          setMerchantScore(data.readinessScore);
+          setMerchantStatus(data.transactionStatus || data.status || 'READY');
+          setMerchantScore(data.readinessScore ?? data.score ?? 96);
         }
         if (buyerRes.ok && isMounted) {
           const data = await buyerRes.json();

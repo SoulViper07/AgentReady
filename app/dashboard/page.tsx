@@ -193,11 +193,19 @@ export default function DashboardPage() {
   const [policies, setPolicies] = useState<PolicyItem[]>([]);
   const [issues, setIssues] = useState<IssueItem[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [dataError, setDataError] = useState(false);
+  const fetchErrorCountRef = React.useRef(0);
+  const isFetchingRef = React.useRef(false);
 
   const fetchReadiness = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     try {
       const res = await fetch('/api/readiness?slug=sweet-crumbs');
-      if (!res.ok) throw new Error('Failed to load readiness data');
+      if (!res.ok) {
+        fetchErrorCountRef.current += 1;
+        throw new Error('Failed to load readiness data');
+      }
       const data = await res.json();
 
       setMerchant(data.merchant);
@@ -206,15 +214,21 @@ export default function DashboardPage() {
       setProducts(data.products || []);
       setPolicies(data.policies || []);
       setIssues(data.issues || []);
+      setDataError(false);
+      fetchErrorCountRef.current = 0;
       window.dispatchEvent(new CustomEvent('agentready:status-update'));
     } catch (err: unknown) {
       console.error(err);
       setStatusMessage('Error loading readiness data');
+      setDataError(true);
+    } finally {
+      isFetchingRef.current = false;
     }
   }, []);
 
   useEffect(() => {
     const handleReset = () => {
+      fetchErrorCountRef.current = 0;
       fetchReadiness();
     };
     window.addEventListener('agentready:reset', handleReset);
@@ -224,9 +238,17 @@ export default function DashboardPage() {
   useEffect(() => {
     let isMounted = true;
     async function loadInitial() {
+      if (fetchErrorCountRef.current >= 3) {
+        setLoading(false);
+        setDataError(true);
+        return;
+      }
       try {
         const res = await fetch('/api/readiness?slug=sweet-crumbs');
-        if (!res.ok) throw new Error('Failed to load readiness data');
+        if (!res.ok) {
+          fetchErrorCountRef.current += 1;
+          throw new Error('Failed to load readiness data');
+        }
         const data = await res.json();
         if (!isMounted) return;
 
@@ -236,10 +258,13 @@ export default function DashboardPage() {
         setProducts(data.products || []);
         setPolicies(data.policies || []);
         setIssues(data.issues || []);
+        setDataError(false);
+        fetchErrorCountRef.current = 0;
       } catch (err: unknown) {
         if (!isMounted) return;
         console.error(err);
         setStatusMessage('Error loading readiness data');
+        setDataError(true);
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -466,6 +491,41 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3 text-stone-400">
           <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
           <span>Loading Merchant Readiness Engine...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Graceful "Data Unavailable" fallback state when data cannot be loaded
+  if (dataError && !merchant) {
+    return (
+      <div className="w-full max-w-7xl mx-auto px-4 py-20 text-center flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-400">
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <h2 className="text-2xl font-semibold text-stone-200">Data Unavailable</h2>
+        <p className="text-stone-400 mt-2 max-w-md mx-auto text-sm leading-relaxed">
+          Unable to retrieve merchant readiness data. The database may be initializing or temporarily disconnected.
+        </p>
+        <div className="mt-6 flex flex-col sm:flex-row items-center gap-3 justify-center">
+          <button
+            onClick={() => {
+              fetchErrorCountRef.current = 0;
+              setDataError(false);
+              setLoading(true);
+              fetchReadiness().finally(() => setLoading(false));
+            }}
+            className="px-4 py-2.5 text-xs font-semibold text-stone-200 bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.03] border border-white/10 rounded-xl transition-colors cursor-pointer"
+          >
+            Retry Connection
+          </button>
+          <SeedDemoButton
+            onSuccess={() => {
+              fetchErrorCountRef.current = 0;
+              setDataError(false);
+              fetchReadiness();
+            }}
+          />
         </div>
       </div>
     );

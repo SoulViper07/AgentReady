@@ -69,6 +69,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<string>(merchantStatus);
   const [currentScore, setCurrentScore] = useState<number>(merchantScore);
+  const fetchErrorCountRef = React.useRef(0);
+  const isFetchingRef = React.useRef(false);
 
   React.useEffect(() => {
     setCurrentStatus(merchantStatus);
@@ -79,15 +81,26 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [merchantScore]);
 
   const fetchLiveStatus = React.useCallback(async () => {
+    if (fetchErrorCountRef.current >= 3) return;
+    if (isFetchingRef.current) return;
+
+    isFetchingRef.current = true;
     try {
       const res = await fetch('/api/readiness?slug=sweet-crumbs');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.transactionStatus) setCurrentStatus(data.transactionStatus);
-        if (data.readinessScore !== undefined) setCurrentScore(data.readinessScore);
+      if (!res.ok) {
+        fetchErrorCountRef.current += 1;
+        return;
       }
+      const data = await res.json();
+      fetchErrorCountRef.current = 0;
+      const status = data.transactionStatus || data.status;
+      if (status) setCurrentStatus(status);
+      const score = data.readinessScore ?? data.score;
+      if (score !== undefined) setCurrentScore(score);
     } catch {
-      // Ignore background fetch error
+      fetchErrorCountRef.current += 1;
+    } finally {
+      isFetchingRef.current = false;
     }
   }, []);
 
@@ -105,6 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const handleReset = async () => {
     if (resetting) return;
     setResetting(true);
+    fetchErrorCountRef.current = 0;
     try {
       const res = await fetch('/api/seed/reset', { method: 'POST' });
       if (!res.ok) throw new Error('Reset failed');
@@ -130,6 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const handleRefresh = async () => {
     if (refreshing) return;
     setRefreshing(true);
+    fetchErrorCountRef.current = 0;
     try {
       if (onRefresh) {
         await onRefresh();
