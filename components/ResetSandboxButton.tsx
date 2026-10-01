@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
-export interface SeedDemoButtonProps {
+export interface ResetSandboxButtonProps {
   onSuccess?: () => void | Promise<void>;
 }
 
-export default function SeedDemoButton({ onSuccess }: SeedDemoButtonProps) {
+export default function ResetSandboxButton({ onSuccess }: ResetSandboxButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSeed = async () => {
+  const handleReset = async () => {
     setLoading(true);
     try {
       await fetch("/api/seed", { method: "POST" });
@@ -25,7 +25,7 @@ export default function SeedDemoButton({ onSuccess }: SeedDemoButtonProps) {
       }
       router.refresh();
     } catch (error) {
-      console.error("Failed to seed data", error);
+      console.error("Failed to reset sandbox", error);
     } finally {
       setLoading(false);
     }
@@ -33,12 +33,12 @@ export default function SeedDemoButton({ onSuccess }: SeedDemoButtonProps) {
 
   return (
     <button 
-      onClick={handleSeed}
+      onClick={handleReset}
       disabled={loading}
-      className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/30 transition-all disabled:opacity-50 cursor-pointer font-medium"
+      className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white/[0.04] text-stone-400 border border-white/[0.08] rounded-lg hover:bg-white/[0.08] hover:text-stone-200 transition-all disabled:opacity-50 active:scale-95 touch-manipulation cursor-pointer"
     >
-      {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : null}
-      {loading ? "Initializing Sandbox..." : "Load Sweet Crumbs Demo Data"}
+      <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading ? "animate-spin" : ""}`} />
+      {loading ? "Resetting..." : "Reset Sandbox"}
     </button>
   );
 }

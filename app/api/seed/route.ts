@@ -6,14 +6,14 @@ export async function POST() {
   try {
     const merchantSlug = 'sweet-crumbs';
 
-    // 1. Clear existing records to ensure fresh sandbox state
-    await prisma.order.deleteMany();
-    await prisma.transactionProposal.deleteMany();
-    await prisma.readinessIssue.deleteMany();
-    await prisma.policy.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.auditLog.deleteMany();
-    await prisma.merchant.deleteMany();
+    // 1. Wipe existing data (respecting foreign key constraints: child records before parents)
+    await prisma.order.deleteMany({});
+    await prisma.transactionProposal.deleteMany({});
+    await prisma.auditLog.deleteMany({});
+    await prisma.readinessIssue.deleteMany({});
+    await prisma.policy.deleteMany({});
+    await prisma.product.deleteMany({});
+    await prisma.merchant.deleteMany({});
 
     // 2. Create sample merchant: Sweet Crumbs
     const merchant = await prisma.merchant.create({
@@ -58,72 +58,72 @@ export async function POST() {
         description: 'Nutella-stuffed golden toasted cocoa dough with crushed hazelnuts. Packaged in custom 6-box bakery sleeves.',
         price: 290,
         currency: 'INR',
-        inventory: 20,
+        inventory: 25,
         isEggless: true,
         priceVerified: true,
         inventoryVerified: true,
         status: 'VERIFIED',
-        sourceEvidence: 'Official Bakery Spec Sheet: ₹290 | Stock: 20 | Eggless verified',
+        sourceEvidence: 'Official Bakery Spec Sheet: ₹290 | Stock: 25 | Eggless verified',
       },
       {
         name: 'Velvet Snow',
         description: 'White chocolate cream cheese cookie dusted with Madagascar vanilla snow. Premium 6 or 8 cookie box.',
         price: 240,
         currency: 'INR',
-        inventory: 15,
+        inventory: 25,
         isEggless: true,
         priceVerified: true,
         inventoryVerified: true,
         status: 'VERIFIED',
-        sourceEvidence: 'Official Bakery Spec Sheet: ₹240 | Stock: 15 | Eggless verified',
+        sourceEvidence: 'Official Bakery Spec Sheet: ₹240 | Stock: 25 | Eggless verified',
       },
       {
         name: 'Yin & Yum',
         description: 'Balanced dark chocolate & Madagascar vanilla marbled shortbread. Available in 6-piece bakery boxes.',
         price: 250,
         currency: 'INR',
-        inventory: 30,
+        inventory: 25,
         isEggless: true,
         priceVerified: true,
         inventoryVerified: true,
         status: 'VERIFIED',
-        sourceEvidence: 'Official Bakery Spec Sheet: ₹250 | Stock: 30 | Eggless verified',
+        sourceEvidence: 'Official Bakery Spec Sheet: ₹250 | Stock: 25 | Eggless verified',
       },
       {
         name: 'Oreo Overload',
         description: 'Double chocolate dough packed with crushed Oreo crumble & cream. Available in 6 and 8 box bundles.',
         price: 270,
         currency: 'INR',
-        inventory: 18,
+        inventory: 25,
         isEggless: true,
         priceVerified: true,
         inventoryVerified: true,
         status: 'VERIFIED',
-        sourceEvidence: 'Official Bakery Spec Sheet: ₹270 | Stock: 18 | Eggless verified',
+        sourceEvidence: 'Official Bakery Spec Sheet: ₹270 | Stock: 25 | Eggless verified',
       },
       {
         name: 'Monster Chaos',
         description: 'Vibrant blue vanilla butter dough with Belgian chips & pretzel brittle. 6 or 8 cookie party pack.',
         price: 280,
         currency: 'INR',
-        inventory: 22,
+        inventory: 25,
         isEggless: false,
         priceVerified: true,
         inventoryVerified: true,
         status: 'VERIFIED',
-        sourceEvidence: 'Official Bakery Spec Sheet: ₹280 | Stock: 22 | Contains egg',
+        sourceEvidence: 'Official Bakery Spec Sheet: ₹280 | Stock: 25 | Contains egg',
       },
       {
         name: 'Velvet Truffle Mix',
         description: 'Luxury 8-cookie sampler box: 2 Dark Desire, 2 Hazel Choco Bomb, 2 Velvet Snow, and 2 Yin & Yum.',
         price: 580,
         currency: 'INR',
-        inventory: 12,
+        inventory: 25,
         isEggless: true,
         priceVerified: true,
         inventoryVerified: true,
         status: 'VERIFIED',
-        sourceEvidence: 'Official Bakery Spec Sheet: ₹580 | Stock: 12 | Eggless verified',
+        sourceEvidence: 'Official Bakery Spec Sheet: ₹580 | Stock: 25 | Eggless verified',
       },
     ];
 
@@ -199,4 +199,8 @@ export async function POST() {
       error instanceof Error ? error.message : 'Internal error during sandbox seed';
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+export async function GET() {
+  return POST();
 }

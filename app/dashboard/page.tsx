@@ -30,6 +30,7 @@ import { IssueCard } from '../../components/IssueCard';
 import { AuditFeed } from '../../components/AuditFeed';
 import { AuthorityTag } from '../../components/AuthorityTag';
 import SeedDemoButton from '../../components/SeedDemoButton';
+import ResetSandboxButton from '../../components/ResetSandboxButton';
 import { PipelineRail } from '../../components/PipelineRail';
 import { motion, useSpring } from 'framer-motion';
 import { Spotlight } from '../../components/ui/Spotlight';
@@ -548,15 +549,20 @@ export default function DashboardPage() {
       {/* Main Responsive Container */}
       <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8 flex-1">
         {/* Sandbox Banner */}
-        <div className="mb-8 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 shrink-0">
-            <Info className="w-5 h-5"/>
+        <div className="mb-8 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 shrink-0 mt-0.5">
+              <Info className="w-5 h-5"/>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-indigo-300">Sandbox Environment Active</h3>
+              <p className="text-xs text-indigo-200/70 mt-1 leading-relaxed">
+                We&apos;ve pre-loaded a sample merchant (Sweet Crumbs) so you can test the Readiness Gates and AI Buyer Terminal immediately. To test your own data, use the Multimodal Ingest tab.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-indigo-300">Sandbox Environment Active</h3>
-            <p className="text-xs text-indigo-200/70 mt-1 leading-relaxed">
-              We&apos;ve pre-loaded a sample merchant (Sweet Crumbs) so you can test the Readiness Gates and AI Buyer Terminal immediately. To test your own data, use the Multimodal Ingest tab.
-            </p>
+          <div className="shrink-0 self-start sm:self-center">
+            <ResetSandboxButton onSuccess={fetchReadiness} />
           </div>
         </div>
 
