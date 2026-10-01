@@ -9,7 +9,7 @@ AgentReady provides the trust and settlement layer that converts informal, unstr
 
 ---
 
-## The Problem in One Example
+## ⚠️ The Problem in One Example
 
 Small merchants frequently operate through informal, fragmented channels: WhatsApp messages, physical menu cards, Instagram captions, and outdated spreadsheets. Humans navigate ambiguity intuitively. Autonomous AI agents cannot guess without creating severe financial risk.
 
@@ -67,7 +67,7 @@ Settlement & Inventory Decrement
 
 ---
 
-## What AgentReady Does
+## ⚙️ What AgentReady Does
 
 AgentReady transforms unstructured merchant operations into safe agentic commerce through a 5-stage pipeline:
 
@@ -83,7 +83,7 @@ Discover  ──►  Assess  ──►  Remediate  ──►  Verify  ──► 
 
 ---
 
-## Why This Matters for Agentic Commerce
+## 🌍 Why This Matters for Agentic Commerce
 
 AI buyer agents are evolving from conversational recommendation tools into autonomous purchasing interfaces. However, agentic commerce cannot scale on unstructured, probabilistic data alone.
 
@@ -110,7 +110,7 @@ Messy Merchant Data (WhatsApp, Menus, CSVs)
 
 ---
 
-## Core Innovation: Financial Authority Boundary
+## 🔒 Core Innovation: Financial Authority Boundary
 
 The fundamental architectural principle of AgentReady is the **strict separation of intelligence from financial authority**:
 
@@ -158,7 +158,7 @@ The fundamental architectural principle of AgentReady is the **strict separation
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```text
                       MERCHANT INPUTS
@@ -240,7 +240,7 @@ The fundamental architectural principle of AgentReady is the **strict separation
 
 ---
 
-## Key Systems
+## 🧩 Key Systems
 
 | System | What It Does | Safety & Reliability Mechanism |
 |:---|:---|:---|
@@ -256,7 +256,7 @@ The fundamental architectural principle of AgentReady is the **strict separation
 
 ---
 
-## Two-Tier Readiness Model
+## ⚖️ Two-Tier Readiness Model
 
 AgentReady separates commerce evaluation into two distinct concepts:
 
@@ -290,7 +290,7 @@ INVARIANT GATE (Hard Deterministic Gate)
 
 ---
 
-## AI Safety & Financial Controls
+## 🛡️ AI Safety & Financial Controls
 
 ### What the AI Can and Cannot Do
 
@@ -304,7 +304,7 @@ INVARIANT GATE (Hard Deterministic Gate)
 
 ---
 
-## Razorpay Payment & Settlement Flow
+## 💳 Razorpay Payment & Settlement Flow
 
 ```text
 1. Autonomous Buyer Formulation
@@ -350,7 +350,7 @@ INVARIANT GATE (Hard Deterministic Gate)
 
 ---
 
-## Graceful Failure Handling: Overstock Gate Block
+## 🛑 Graceful Failure Handling: Overstock Gate Block
 
 A fundamental evaluation criterion in autonomous commerce is demonstrating explainable, bounded, and gated financial controls during failure.
 
@@ -405,7 +405,7 @@ To eliminate server cold-starts, the production deployment is kept alive 24/7 vi
 
 ---
 
-## Demo Scenarios
+## 🎬 Demo Scenarios
 
 ### Scenario 1 — Multimodal Ingestion
 - Upload a photo of a physical menu or paste unstructured WhatsApp text.
@@ -433,7 +433,7 @@ To eliminate server cold-starts, the production deployment is kept alive 24/7 vi
 
 ---
 
-## Technology Stack
+## 💻 Technology Stack
 
 | Layer | Technologies | Role in Project |
 |:---|:---|:---|
@@ -445,7 +445,7 @@ To eliminate server cold-starts, the production deployment is kept alive 24/7 vi
 
 ---
 
-## API Reference
+## 🔌 API Reference
 
 All 9 API endpoints are fully implemented and verified against the repository:
 
@@ -496,7 +496,7 @@ Resets the demo merchant *"Sweet Crumbs"* to its unverified baseline state.
 
 ---
 
-## Local Setup Guide
+## 🚀 Local Setup Guide
 
 ### Prerequisites
 - Node.js 18.x or 20.x
@@ -545,7 +545,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser:
 
 ---
 
-## Test Suites
+## 🧪 Test Suites
 
 Run the end-to-end verification suites verifying all subsystems:
 
@@ -568,7 +568,7 @@ npm run build
 
 ---
 
-## Project Structure
+## 📂 Project Structure
 
 ```text
 agentready/
@@ -625,7 +625,7 @@ agentready/
 
 ---
 
-## UI / UX Design System
+## 🎨 UI / UX Design System
 
 AgentReady is designed as an executive commerce platform adhering to the **Stripe Horizon / Apple Pay / Linear warm aesthetic**:
 - **Warm Grounded Surfaces**: Deep espresso/charcoal background (`#0E0F12`), grounded card surfaces (`#181A20`), and subtle warm borders (`border-white/[0.08]`).
@@ -636,7 +636,7 @@ AgentReady is designed as an executive commerce platform adhering to the **Strip
 
 ---
 
-## Technical Highlights
+## ✨ Technical Highlights
 
 - **Multimodal Merchant Ingestion**: Vision OCR and text parsing with source quotation preservation and strict `null` defaults.
 - **Dual-Provider Resilience**: Smart routing across Gemini (multimodal OCR) and Groq (high-throughput text) with defensive schema normalization.
@@ -652,7 +652,7 @@ AgentReady is designed as an executive commerce platform adhering to the **Strip
 
 ---
 
-## What Makes AgentReady Different
+## 💡 What Makes AgentReady Different
 
 Most agentic commerce projects ask:
 > *"How can an AI agent search the web and buy things?"*
@@ -677,7 +677,7 @@ Without this layer, autonomous commerce remains an unreliable demo vulnerable to
 
 ---
 
-## Razorpay Buildathon 2026 Alignment
+## 🏆 Razorpay Buildathon 2026 Alignment
 
 **Track 01: AI Growth & Agentic Commerce**
 
