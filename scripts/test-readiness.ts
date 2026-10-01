@@ -25,8 +25,8 @@ async function runReadinessTest() {
       data: {
         name: 'Sweet Crumbs',
         slug: merchantSlug,
-        location: 'Chandannagar & Chuchura',
-        contactPhone: '+91 8697774043',
+        location: 'Koramangala, Bengaluru',
+        contactPhone: '+91 98765 43210',
         readinessScore: 0,
         transactionStatus: 'NOT_READY',
       },

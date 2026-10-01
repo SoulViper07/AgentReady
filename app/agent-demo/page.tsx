@@ -749,7 +749,7 @@ export default function AgentDemoPage() {
         order_id: orderData.orderId,
         prefill: {
           name: 'Demo Autonomous Buyer',
-          contact: '+91 8697774043',
+          contact: '+91 98765 43210',
           email: 'buyer@agentready.demo',
         },
         theme: {

@@ -17,8 +17,8 @@ async function main() {
     data: {
       name: 'Sweet Crumbs',
       slug: 'sweet-crumbs',
-      location: 'Chandannagar & Chuchura',
-      contactPhone: '+91 8697774043',
+      location: 'Koramangala, Bengaluru',
+      contactPhone: '+91 98765 43210',
       readinessScore: 0,
       transactionStatus: 'NOT_READY',
       auditLogs: {
@@ -27,8 +27,8 @@ async function main() {
           details: JSON.stringify({
             action: 'MERCHANT_ONBOARDED',
             merchant: 'Sweet Crumbs',
-            location: 'Chandannagar & Chuchura',
-            contact: '+91 8697774043',
+            location: 'Koramangala, Bengaluru',
+            contact: '+91 98765 43210',
           }),
         },
       },

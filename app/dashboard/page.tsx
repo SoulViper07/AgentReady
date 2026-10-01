@@ -573,12 +573,12 @@ export default function DashboardPage() {
               <div className="flex items-center gap-x-4 gap-y-1.5 text-xs text-stone-400 flex-wrap">
                 <span className="inline-flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-                  <span>{merchant?.location || 'Chandannagar'}</span>
+                  <span>{merchant?.location || 'Koramangala, Bengaluru'}</span>
                 </span>
                 <span className="hidden xs:inline text-stone-700">•</span>
                 <span className="inline-flex items-center gap-1.5">
                   <Phone className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-                  <span>{merchant?.contactPhone || '+91 8697774043'}</span>
+                  <span>{merchant?.contactPhone || '+91 98765 43210'}</span>
                 </span>
                 <span className="hidden xs:inline text-stone-700">•</span>
                 <span className="inline-flex items-center gap-1.5">
@@ -881,13 +881,13 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between py-2.5">
                     <span className="text-stone-400">Delivery Territory</span>
                     <span className="text-stone-100 font-medium">
-                      Chandannagar
+                      Pan-India (Tier 1 &amp; 2)
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2.5">
                     <span className="text-stone-400">Merchant Contact</span>
                     <span className="text-stone-100 font-medium">
-                      +91 8697774043
+                      +91 98765 43210
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2.5">

@@ -20,8 +20,8 @@ export async function POST() {
       data: {
         name: 'Sweet Crumbs',
         slug: merchantSlug,
-        location: 'Chandannagar',
-        contactPhone: '+91 8697774043',
+        location: 'Koramangala, Bengaluru',
+        contactPhone: '+91 98765 43210',
         readinessScore: 0,
         transactionStatus: 'NOT_READY',
         auditLogs: {
@@ -30,8 +30,8 @@ export async function POST() {
             details: JSON.stringify({
               action: 'SANDBOX_INITIALIZED',
               merchant: 'Sweet Crumbs',
-              location: 'Chandannagar',
-              contact: '+91 8697774043',
+              location: 'Koramangala, Bengaluru',
+              contact: '+91 98765 43210',
               timestamp: new Date().toISOString(),
             }),
           },
@@ -153,7 +153,7 @@ export async function POST() {
         data: {
           merchantId: merchant.id,
           type: 'DELIVERY',
-          content: 'Standard temperature-controlled delivery across Chandannagar, Chuchura, and Kolkata metro within 45-60 minutes.',
+          content: 'Standard temperature-controlled delivery across Pan-India (Tier 1 & 2) within 45-60 minutes.',
           isVerified: true,
           sourceEvidence: 'Merchant logistics partner SLA verified and active.',
         },

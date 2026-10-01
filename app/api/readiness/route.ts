@@ -69,7 +69,7 @@ function getFallbackReadiness(slug: string = 'sweet-crumbs') {
       id: 'demo-merchant-sweet-crumbs',
       name: 'Sweet Crumbs Artisan Bakery',
       slug,
-      location: 'Bengaluru, India',
+      location: 'Koramangala, Bengaluru',
       contactPhone: '+91 98765 43210',
       readinessScore: 96,
       transactionStatus: 'READY' as const,

@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
         data: {
           slug: merchantSlug,
           name: 'Sweet Crumbs',
-          location: 'Indiranagar, Bengaluru',
-          contactPhone: '+91 8697774043',
+          location: 'Koramangala, Bengaluru',
+          contactPhone: '+91 98765 43210',
           readinessScore: 30,
           transactionStatus: 'NOT_READY',
         },
