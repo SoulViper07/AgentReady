@@ -398,6 +398,13 @@ Autonomous Buyer Request:
 
 ---
 
+## 🧪 Live Sandbox & Self-Healing Data
+To eliminate server cold-starts, the production deployment is kept alive 24/7 via a background cron job. Because Render's ephemeral SQLite disk resets unpredictably, the application features a **Self-Healing Sandbox**. 
+* If a previous tester depleted the inventory of "Sweet Crumbs", any judge can instantly reset the catalog and replenish stock by tapping the **"↻ Reset Sandbox"** button in the dashboard header.
+* This ensures a pristine, isolated testing state for every evaluator without database lockouts.
+
+---
+
 ## Demo Scenarios
 
 ### Scenario 1 — Multimodal Ingestion
@@ -533,8 +540,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser:
 - **Merchant Remediation Dashboard**: `http://localhost:3000/dashboard`
 - **Multimodal Ingestion Studio**: `http://localhost:3000/ingest`
 - **Autonomous Buyer Simulator**: `http://localhost:3000/agent-demo`
+- **Append-Only Audit Ledger**: `http://localhost:3000/ledger`
 - **Public Catalog Discovery API**: `http://localhost:3000/api/catalog?merchantSlug=sweet-crumbs`
-- **Append-Only Audit Ledger API**: `http://localhost:3000/api/audit?merchantSlug=sweet-crumbs`
 
 ---
 
@@ -569,6 +576,7 @@ agentready/
 │   ├── agent-demo/page.tsx          # Autonomous buyer simulator & checkout interface
 │   ├── dashboard/page.tsx           # Merchant readiness console & HITL remediation
 │   ├── ingest/page.tsx              # Multimodal Ingestion Studio (Vision OCR & text)
+│   ├── ledger/page.tsx              # Dedicated immutable audit ledger UI
 │   ├── layout.tsx                   # Root layout with fonts & metadata
 │   ├── globals.css                  # Tailwind styles & warm luxury theme variables
 │   ├── page.tsx                     # Root redirect to /dashboard
