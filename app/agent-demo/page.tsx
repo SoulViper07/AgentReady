@@ -212,6 +212,8 @@ export default function AgentDemoPage() {
   ]);
   const [sessionId, setSessionId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const isInitialMountRef = useRef<boolean>(true);
+  const prevMessagesCountRef = useRef<number>(messages.length);
 
   useEffect(() => {
     const newSessionId =
@@ -239,7 +241,20 @@ export default function AgentDemoPage() {
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Prevent auto-scrolling on initial component mounting
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      prevMessagesCountRef.current = messages.length;
+      return;
+    }
+
+    // Only scroll when a new message is actively submitted or received (or while actively loading a response)
+    const hasNewMessage = messages.length > prevMessagesCountRef.current;
+    prevMessagesCountRef.current = messages.length;
+
+    if (hasNewMessage || loading) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, loading]);
 
   const [merchantStatus, setMerchantStatus] = useState<string>('LOADING');
