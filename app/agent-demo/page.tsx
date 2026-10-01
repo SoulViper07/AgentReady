@@ -210,7 +210,33 @@ export default function AgentDemoPage() {
       timestamp: 'Ready',
     },
   ]);
+  const [sessionId, setSessionId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const newSessionId =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    setSessionId(newSessionId);
+
+    // Client-side session reset: start with fresh empty cart and welcome history on mount
+    setMessages([
+      {
+        id: 'welcome',
+        sender: 'assistant',
+        text: "Welcome to Sweet Crumbs! I am your autonomous AI Buyer agent. What would you like to order today? You can say '1 box of Dark Desire cookies', 'Any eggless dessert under ₹250', or tap any suggestion below.",
+        timestamp: 'Ready',
+      },
+    ]);
+    setProposal(null);
+    setRecentProposals([]);
+    setActiveResponse(null);
+    setGateBlockedInfo(null);
+    setGateBlockedReason(null);
+    setVerifiedReceipt(null);
+    setCheckoutOrderData(null);
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -315,9 +341,11 @@ export default function AgentDemoPage() {
     }
   }, []);
 
-  const fetchRecentProposals = useCallback(async () => {
+  const fetchRecentProposals = useCallback(async (customSessionId?: string) => {
+    const sId = customSessionId || sessionId;
+    if (!sId) return;
     try {
-      const res = await fetch('/api/buyer?limit=5');
+      const res = await fetch(`/api/buyer?sessionId=${sId}&limit=5`);
       if (res.ok) {
         const data = await res.json();
         setRecentProposals(data.proposals || []);
@@ -325,29 +353,20 @@ export default function AgentDemoPage() {
     } catch (e) {
       console.error(e);
     }
-  }, []);
+  }, [sessionId]);
 
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
       try {
-        const [readRes, buyerRes, catRes] = await Promise.all([
+        const [readRes, catRes] = await Promise.all([
           fetch('/api/readiness?slug=sweet-crumbs'),
-          fetch('/api/buyer?limit=5'),
           fetch('/api/catalog?merchantSlug=sweet-crumbs'),
         ]);
         if (readRes.ok && isMounted) {
           const data = await readRes.json();
           setMerchantStatus(data.transactionStatus || data.status || 'READY');
           setMerchantScore(data.readinessScore ?? data.score ?? 96);
-        }
-        if (buyerRes.ok && isMounted) {
-          const data = await buyerRes.json();
-          const props = data.proposals || [];
-          setRecentProposals(props);
-          if (props.length > 0) {
-            setProposal((prev) => prev ?? props[0]);
-          }
         }
         if (catRes.ok && isMounted) {
           const catData = await catRes.json();
@@ -492,6 +511,7 @@ export default function AgentDemoPage() {
         body: JSON.stringify({
           query: textToRun,
           merchantSlug: 'sweet-crumbs',
+          sessionId,
         }),
       });
 

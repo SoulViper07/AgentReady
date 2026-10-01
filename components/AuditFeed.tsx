@@ -352,3 +352,4 @@ export const AuditFeed: React.FC<AuditFeedProps> = ({
 };
 
 export default AuditFeed;
+export const AuditLedger = AuditFeed;

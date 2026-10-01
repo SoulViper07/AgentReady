@@ -38,7 +38,7 @@ const navLinks = [
     icon: Bot,
   },
   {
-    href: '/dashboard#ledger',
+    href: '/ledger',
     label: 'Audit Ledger',
     shortTag: 'LOG',
     icon: History,
@@ -71,6 +71,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [currentScore, setCurrentScore] = useState<number>(merchantScore);
   const fetchErrorCountRef = React.useRef(0);
   const isFetchingRef = React.useRef(false);
+
+  const handleNav = (e: React.SyntheticEvent, path: string) => {
+    e.preventDefault();
+    router.push(path);
+  };
 
   React.useEffect(() => {
     setCurrentStatus(merchantStatus);
@@ -190,6 +195,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {subtitle ||
                   (pathname === '/agent-demo'
                     ? 'Autonomous Buyer Simulator & Invariant Gate'
+                    : pathname === '/ledger'
+                    ? 'Immutable System Event Audit Ledger'
+                    : pathname === '/ingest'
+                    ? 'Multimodal Catalog & Policy Ingestion'
                     : 'Merchant Remediation & Verification Console')}
               </p>
             </div>
@@ -198,12 +207,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Desktop Navigation Pills with Smooth Sliding Active Pill Indicator */}
           <nav className="hidden sm:flex items-center gap-1 border-l border-white/[0.08] pl-4 sm:pl-5">
             {navLinks.map((link) => {
-              const isActive = link.shortTag === 'LOG' ? false : pathname === link.href;
+              const isActive = pathname === link.href;
               const Icon = link.icon;
               return (
-                <Link
+                <button
                   key={link.href}
-                  href={link.href}
+                  type="button"
+                  onClick={(e) => handleNav(e, link.href)}
+                  onTouchStart={(e) => handleNav(e, link.href)}
                   className={`relative px-3.5 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 touch-manipulation cursor-pointer ${
                     isActive
                       ? 'text-emerald-400'
@@ -223,7 +234,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }`}
                   />
                   <span>{link.label}</span>
-                </Link>
+                </button>
               );
             })}
           </nav>
@@ -291,27 +302,29 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Dedicated Mobile Navigation Strip: Expanded Hit Targets & Zero Geometry Shifts */}
+      {/* Dedicated Mobile Navigation Strip: Expanded Hit Targets & Instant Touch Routing */}
       <div className="flex sm:hidden items-center justify-between gap-1 px-2 py-1.5 bg-[#0E0F12]/95 border-t border-white/[0.06] backdrop-blur-md no-scrollbar">
         {navLinks.map((link) => {
-          const isActive = link.shortTag === 'LOG' ? false : pathname === link.href;
+          const isActive = pathname === link.href;
           const Icon = link.icon;
           return (
-            <Link
+            <button
               key={link.href}
-              href={link.href}
+              type="button"
+              onClick={(e) => handleNav(e, link.href)}
+              onTouchStart={(e) => handleNav(e, link.href)}
               aria-label={link.label}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-lg text-xs font-medium transition-colors touch-manipulation select-none ${
+              className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-lg text-xs font-medium transition-colors touch-manipulation select-none active:bg-white/[0.05] ${
                 isActive
                   ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.12)]'
-                  : 'text-stone-300 hover:text-white hover:bg-white/[0.02] active:bg-white/[0.05] border border-transparent'
+                  : 'text-stone-300 border border-transparent'
               }`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0 pointer-events-none" />
               <span className="font-mono font-semibold tracking-wider pointer-events-none">
                 {link.shortTag}
               </span>
-            </Link>
+            </button>
           );
         })}
       </div>
