@@ -9,6 +9,8 @@ export async function POST(request: NextRequest) {
 
     let merchantId: string | null = body.merchantId || null;
 
+    let updatedProduct: any = null;
+
     if (!action) {
       return NextResponse.json(
         { error: 'action field is required' },
@@ -28,7 +30,7 @@ export async function POST(request: NextRequest) {
       action === 'SET_PRICE' ||
       action === 'SET_INVENTORY'
     ) {
-      const { productId, price, inventory, productName } = body;
+      const { productId, price, inventory, productName, issueId } = body;
 
       let existingProduct = null;
       if (productId) {
@@ -143,12 +145,12 @@ export async function POST(request: NextRequest) {
         updateData.inventory = parsedInventory;
       }
 
-      const updatedProduct = await prisma.product.update({
+      updatedProduct = await prisma.product.update({
         where: { id: targetProductId },
         data: updateData,
       });
 
-      // Auto-resolve related ReadinessIssues for this product
+      // Auto-resolve ONLY related ReadinessIssues for this specific product and field
       const relatedIssues = await prisma.readinessIssue.findMany({
         where: {
           merchantId,
@@ -157,33 +159,28 @@ export async function POST(request: NextRequest) {
       });
 
       for (const issue of relatedIssues) {
+        const isExplicitIssue = Boolean(issueId && issue.id === issueId);
+
         const isThisProduct =
           issue.description
             .toLowerCase()
             .includes(existingProduct.name.toLowerCase()) ||
           issue.title
             .toLowerCase()
-            .includes(existingProduct.name.toLowerCase());
+            .includes(existingProduct.name.toLowerCase()) ||
+          issue.description.includes(existingProduct.id);
 
-        const canResolvePrice =
-          issue.category === 'PRICE' &&
-          (parsedPrice !== undefined || isThisProduct);
-        const canResolveInv =
-          issue.category === 'INVENTORY' &&
-          (parsedInventory !== undefined || isThisProduct);
-        const canResolveConsistency =
-          issue.category === 'CONSISTENCY' &&
+        const shouldResolvePrice =
           isThisProduct &&
-          parsedPrice !== undefined;
+          parsedPrice !== undefined &&
+          (issue.category === 'PRICE' || issue.category === 'CONSISTENCY');
 
-        if (
-          isThisProduct ||
-          (issue.category === 'INVENTORY' && parsedInventory !== undefined) ||
-          (issue.category === 'PRICE' && parsedPrice !== undefined) ||
-          canResolvePrice ||
-          canResolveInv ||
-          canResolveConsistency
-        ) {
+        const shouldResolveInventory =
+          isThisProduct &&
+          parsedInventory !== undefined &&
+          issue.category === 'INVENTORY';
+
+        if (isExplicitIssue || shouldResolvePrice || shouldResolveInventory) {
           await prisma.readinessIssue.update({
             where: { id: issue.id },
             data: { resolved: true },
@@ -283,7 +280,7 @@ export async function POST(request: NextRequest) {
       if (targetProduct) {
         const isVerified =
           targetProduct.inventoryVerified && targetProduct.inventory !== null;
-        await prisma.product.update({
+        updatedProduct = await prisma.product.update({
           where: { id: targetProduct.id },
           data: {
             price: parsedPrice,
@@ -442,6 +439,7 @@ export async function POST(request: NextRequest) {
       success: true,
       action,
       merchantId,
+      product: updatedProduct,
       readinessScore: evaluation.readinessScore,
       transactionStatus: evaluation.transactionStatus,
       invariants: evaluation.invariants,

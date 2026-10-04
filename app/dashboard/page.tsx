@@ -198,8 +198,8 @@ export default function DashboardPage() {
   const fetchErrorCountRef = React.useRef(0);
   const isFetchingRef = React.useRef(false);
 
-  const fetchReadiness = useCallback(async () => {
-    if (isFetchingRef.current) return;
+  const fetchReadiness = useCallback(async (force = false) => {
+    if (isFetchingRef.current && !force) return;
     isFetchingRef.current = true;
     try {
       const res = await fetch('/api/readiness?slug=sweet-crumbs');
@@ -341,8 +341,22 @@ export default function DashboardPage() {
       setScoreBreakdown(result.scoreBreakdown);
       setInvariants(result.invariants);
 
+      // Safe state update: update only the verified product item, preserving the rest of the array
+      if (result.product) {
+        const updated = result.product;
+        setProducts((prev) =>
+          prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+        );
+      } else if (result.products && Array.isArray(result.products)) {
+        setProducts(result.products);
+      }
+
+      if (result.policies && Array.isArray(result.policies)) {
+        setPolicies(result.policies);
+      }
+
       // Refresh full dataset to update issue resolved statuses & policy/product flags
-      await fetchReadiness();
+      await fetchReadiness(true);
 
       setStatusMessage('Action applied and readiness score recalculated.');
       setTimeout(() => setStatusMessage(null), 4000);

@@ -397,6 +397,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                 onClick={() =>
                   handleAction({
                     action: 'VERIFY_PRODUCT',
+                    issueId: issue.id,
                     productId: matchedProduct?.id,
                     price: parseFloat(inputPrice),
                   })
@@ -435,6 +436,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                 onClick={() =>
                   handleAction({
                     action: 'VERIFY_PRODUCT',
+                    issueId: issue.id,
                     productId: matchedProduct?.id,
                     inventory: parseInt(inputInventory, 10) || 10,
                   })
@@ -478,6 +480,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   onClick={() =>
                     handleAction({
                       action: 'APPROVE_POLICY',
+                      issueId: issue.id,
                       merchantId: issue.merchantId,
                       type: 'REFUND',
                       content: policyText,
@@ -721,6 +724,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   onClick={() =>
                     handleAction({
                       action: 'VERIFY_PRODUCT',
+                      issueId: issue.id,
                       productId: matchedProduct?.id,
                       price: parseFloat(inputPrice),
                     })
@@ -762,6 +766,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   onClick={() =>
                     handleAction({
                       action: 'VERIFY_PRODUCT',
+                      issueId: issue.id,
                       productId: matchedProduct?.id,
                       inventory: parseInt(inputInventory, 10) || 10,
                     })
@@ -796,6 +801,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                   onClick={() =>
                     handleAction({
                       action: 'APPROVE_POLICY',
+                      issueId: issue.id,
                       merchantId: issue.merchantId,
                       type: 'REFUND',
                       content: policyText,
